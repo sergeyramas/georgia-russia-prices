@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аренда жилья в Грузии — Тбилиси, Батуми, Кобулети, Зугдиди (июнь 2026)</title>
+<meta name="description" content="Стоимость аренды квартир и домов в Грузии: Тбилиси, Батуми, Кобулети, Зугдиди. Реальные объявления с ss.ge с прямыми ссылками, средние диапазоны рынка в лари, долларах и рублях. Июнь 2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0f14; --surface:#151922; --surface2:#1b2029; --border:#272d39;
+    --text:#e9edf4; --muted:#9aa4b4; --faint:#6b7384;
+    --green:#2ecc8f; --red:#ff6b6b; --amber:#e0b020; --accent:#5b8def;
+    --apt:#5b8def; --house:#c08bdf;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .topnav{display:flex;gap:8px;padding:18px 0 0;flex-wrap:wrap}
+  .topnav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:20px;background:var(--surface)}
+  .topnav a.active{color:var(--text);border-color:var(--accent);background:rgba(91,141,239,.12)}
+  .topnav a:hover{color:var(--text)}
+  header{padding:30px 0 30px;border-bottom:1px solid var(--border)}
+  .kicker{color:var(--accent);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+  h1{font-size:clamp(26px,4.6vw,42px);font-weight:700;line-height:1.12;letter-spacing:-.02em;margin-bottom:16px}
+  .sub{color:var(--muted);font-size:16px;max-width:720px}
+  .rate-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .chip{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 16px}
+  .chip .l{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+  .chip .v{font-size:18px;font-weight:600;margin-top:2px}
+  .chip .v small{font-size:12px;color:var(--muted);font-weight:400}
+  .picker{position:sticky;top:0;z-index:20;background:var(--bg);padding:18px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .picker label{font-size:14px;color:var(--muted);font-weight:500}
+  select{font-family:inherit;font-size:16px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 16px;cursor:pointer;min-width:230px}
+  select:focus{outline:none;border-color:var(--accent)}
+  .city-meta{font-size:13px;color:var(--faint)}
+  section.city{padding:30px 0}
+  .blk{margin-bottom:34px}
+  .blk-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .blk-head .ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .ico.apt{background:rgba(91,141,239,.16)}
+  .ico.house{background:rgba(192,139,223,.16)}
+  h2{font-size:21px;font-weight:600;letter-spacing:-.01em}
+  .blk-head .sz{font-size:13px;color:var(--muted)}
+  .range-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .range-card .rc-lab{grid-column:1/-1;font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:-4px}
+  .rc-cur .c-name{font-size:11px;color:var(--faint);margin-bottom:3px}
+  .rc-cur .c-val{font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .rc-cur .c-val .dash{color:var(--faint);font-weight:400;margin:0 4px}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:var(--surface)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:680px}
+  th,td{padding:12px 15px;text-align:right;white-space:nowrap;vertical-align:middle}
+  th:first-child,td:first-child{text-align:left;white-space:normal;min-width:260px}
+  thead th{background:var(--surface2);color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  tbody tr{border-top:1px solid var(--border)}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  .li-title{font-weight:500;color:var(--text)}
+  .li-sub{font-size:12px;color:var(--faint);margin-top:1px}
+  td.area{color:var(--muted)}
+  td.cur{font-variant-numeric:tabular-nums}
+  td.orig{font-weight:600;color:var(--text)}
+  td.conv{color:var(--muted);font-variant-numeric:tabular-nums}
+  .src-link{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--accent);text-decoration:none;background:rgba(91,141,239,.1);padding:5px 10px;border-radius:8px;white-space:nowrap}
+  .src-link:hover{background:rgba(91,141,239,.2)}
+  .note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--muted);margin-top:6px}
+  .note b{color:var(--text);font-weight:500}
+  .empty{padding:18px;text-align:center;color:var(--faint);font-size:14px;background:var(--surface);border:1px dashed var(--border);border-radius:12px}
+  footer{padding:34px 0 60px;color:var(--faint);font-size:13px;border-top:1px solid var(--border);margin-top:20px}
+  footer a{color:var(--muted)}
+  @media(max-width:600px){header{padding:24px 0}select{min-width:0;width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="topnav">
+  <a href="index.html">← Сравнение цен Грузия vs РФ</a>
+  <a href="rent.html" class="active">Аренда жилья</a>
+</nav>
+
+<header>
+  <div class="kicker">Рынок аренды · официальные порталы ss.ge / livo.ge · июнь 2026</div>
+  <h1>Аренда жилья в Грузии</h1>
+  <p class="sub">Сколько стоит снять квартиру (1–2 спальни) и дом (3–4 комнаты) в Тбилиси, Батуми, Кобулети и Зугдиди. Средние диапазоны по рынку и конкретные живые объявления с прямыми ссылками. Каждая ссылка проверена — страница реально открывается и цена совпадает.</p>
+  <div class="rate-bar">
+    <div class="chip"><div class="l">Курс лари</div><div class="v">27.22 ₽ <small>/ 1 ₾</small></div></div>
+    <div class="chip"><div class="l">Лари в долларах</div><div class="v">$0.377 <small>/ 1 ₾</small></div></div>
+    <div class="chip"><div class="l">Доллар</div><div class="v">72.71 ₽ <small>/ $1</small></div></div>
+    <div class="chip"><div class="l">Источник курса</div><div class="v" style="font-size:14px;font-weight:500">Нацбанк Грузии · 17.06.2026</div></div>
+  </div>
+</header>
+
+<div class="picker">
+  <label for="citySel">Город:</label>
+  <select id="citySel"></select>
+  <span class="city-meta" id="cityMeta"></span>
+</div>
+
+<section class="city" id="cityView"></section>
+
+<footer>
+  <p>Данные собраны 17 июня 2026 с крупнейшего грузинского портала недвижимости <a href="https://home.ss.ge" target="_blank" rel="noopener">ss.ge</a>, а также livo.ge/xmetr.com и korter.ge. Все цены — долгосрочная аренда за месяц. Большинство объявлений котируются в долларах США (оплата обычно в лари по курсу дня); по Зугдиди — в лари. Конвертация по курсу Нацбанка Грузии на 17.06.2026.</p>
+  <p style="margin-top:10px">⚠ Объявления актуальны на дату сбора — со временем часть снимается. Летом (июнь–август) в курортных Батуми и Кобулети много квартир уходит в посуточную/сезонную аренду, долгосрочных предложений меньше, цены выше. Сезонные лоты в выборку не включены.</p>
+</footer>
+
+</div>
+
+<script>
+const RATE = { gelUsd:0.3766, gelRub:27.22, usdGel:2.6554, usdRub:72.71 };
+const fmt = n => Math.round(n).toLocaleString('ru-RU');
+function conv(price, cur){
+  if(cur==='USD') return { usd:price, gel:price*RATE.usdGel, rub:price*RATE.usdRub };
+  return { gel:price, usd:price*RATE.gelUsd, rub:price*RATE.gelRub };
+}
+function srcName(url){
+  if(url.indexOf('ss.ge')>-1) return 'ss.ge';
+  if(url.indexOf('xmetr.com')>-1) return 'xmetr/livo.ge';
+  if(url.indexOf('korter.ge')>-1) return 'korter.ge';
+  return 'источник';
+}
+
+const DATA = {
+  tbilisi:{ name:'Тбилиси (столица)', short:'Тбилиси',
+    apt:{low:400, high:1600, cur:'USD', size:'1–2 спальни, 44–120 м²'},
+    house:{low:1000, high:3000, cur:'USD', size:'3–4 спальни, 120–300 м²'},
+    note:'Рынок насыщенный, большой выбор квартир в диапазоне $400–$1000. Ваке — самый престижный район, дороже Сабуртало в 1.5–2 раза. Частных домов в аренду в черте города мало, большинство — в пригородах (Дигоми, Цкнети).',
+    listings:[
+      {kind:'apt', title:'Ваке, ул. Атени — 3 комнаты (2 спальни)', area:110, price:1100, cur:'USD', url:'https://home.ss.ge/en/real-estate/35704701', date:'17.06'},
+      {kind:'apt', title:'Ваке, пр. Чавчавадзе — 2 комнаты (1 спальня)', area:70, price:800, cur:'USD', url:'https://home.ss.ge/en/real-estate/35766896', date:'16.06'},
+      {kind:'apt', title:'Сабуртало, ул. Мачавариани — 3 комнаты (2 спальни)', area:120, price:1500, cur:'USD', url:'https://home.ss.ge/en/real-estate/35819229', date:'17.06'},
+      {kind:'apt', title:'Сабуртало, ул. Мицкевича — 4 комнаты (2 спальни)', area:100, price:950, cur:'USD', url:'https://home.ss.ge/en/real-estate/35672275', date:'16.06'},
+      {kind:'apt', title:'Нуцубидзе, ул. Датуашвили — 2 комнаты (1 спальня)', area:54, price:650, cur:'USD', url:'https://home.ss.ge/en/real-estate/34568701', date:'16.06'},
+      {kind:'apt', title:'Диди Дигоми, пр. Парнаваза Мепе — 2 комнаты (1 спальня)', area:50, price:400, cur:'USD', url:'https://home.ss.ge/en/real-estate/35734570', date:'16.06'},
+      {kind:'house', title:'Ваке, ул. Кекелидзе — 4 комнаты (3 спальни)', area:160, price:1000, cur:'USD', url:'https://home.ss.ge/en/real-estate/35767790', date:'15.06'},
+      {kind:'house', title:'Дигоми, ул. Нозадзе — частный дом, 7 комнат (4 спальни) + двор 700 м²', area:230, price:2700, cur:'USD', url:'https://home.ss.ge/en/real-estate/35019563', date:'16.06'},
+    ]},
+  batumi:{ name:'Батуми', short:'Батуми',
+    apt:{low:350, high:900, cur:'USD', size:'1–2 спальни, 30–65 м²'},
+    house:{low:600, high:1500, cur:'USD', size:'3–5 комнат, 80–150 м², часто с двором'},
+    note:'Близость к морю — главный ценовой фактор: район у Бульвара/Руставели дороже горгорода и района аэропорта на 30–50%. Домов в аренду заметно меньше, чем квартир. Часть объявлений на ss.ge даёт цену за год — такие в выборку не включены.',
+    listings:[
+      {kind:'apt', title:'Пивзаодский р-н, ул. Мамуладзе 27 — 1 комната, новостройка', area:33, price:500, cur:'USD', url:'https://home.ss.ge/en/real-estate/1-room-Flat-For-Rent-Pivzaod-district-35843421', date:'15.06'},
+      {kind:'apt', title:'ул. Палиашвили 16 — 1 спальня, меблирована, мин. 1 год', area:45, price:650, cur:'USD', url:'https://xmetr.com/en/properties/id6663-modern-apartment-for-rent-batumi-georgia', date:'16.06'},
+      {kind:'apt', title:'ул. Шартава 27 — 1 спальня, посудомойка, 9 этаж', area:40, price:600, cur:'USD', url:'https://xmetr.com/en/properties/id6720-stylish-apartment-40m2-for-rent-batumi-georgia', date:'16.06'},
+      {kind:'apt', title:'ул. Тбел-Абусеридзе 42 — 1 спальня, меблирована, 10 этаж', area:43, price:500, cur:'USD', url:'https://xmetr.com/en/properties/id6721-furnished-apartment-43m2-for-rent-batumi-georgia', date:'16.06'},
+      {kind:'apt', title:'Студия, ул. Вахтанга Горгасали 65, центр — без комиссии', area:32, price:450, cur:'USD', url:'https://xmetr.com/en/properties/id6715-compact-cozy-studio-32m2-for-rent-batumi-georgia', date:'16.06'},
+      {kind:'house', title:'Агмашенебели р-н, ул. Месхис 3 — дом 5 комнат (4 спальни) + двор', area:150, price:1200, cur:'USD', url:'https://home.ss.ge/en/real-estate/Private-House-For-Rent-Agmashenebeli-District-35856722', date:'17.06'},
+    ]},
+  kobuleti:{ name:'Кобулети', short:'Кобулети',
+    apt:{low:250, high:600, cur:'USD', size:'1–2 спальни, 30–65 м²'},
+    house:{low:500, high:1000, cur:'USD', size:'3–4 комнаты, 80–150 м², частный дом'},
+    note:'Маленький курортный городок (~25 км от Батуми). Рынок узкий — одновременно 15–20 активных лотов. Сезонность критична: летом большинство квартир уходит в посуточную аренду ($60–70/день), долгосрочных предложений мало. Чисто сезонные лоты в выборку не включены.',
+    listings:[
+      {kind:'apt', title:'Центр, рядом с мэрией, вид на море — 2 комнаты', area:55, price:400, cur:'USD', url:'https://home.ss.ge/en/real-estate/2-room-Flat-For-Rent-Kobuleti-7742580', date:'19.05'},
+      {kind:'apt', title:'Новостройка (Kobuleti.agency) — 2 комнаты', area:60, price:600, cur:'USD', url:'https://home.ss.ge/en/real-estate/2-room-Flat-For-Rent-Kobuleti-35583652', date:'30.05'},
+      {kind:'apt', title:'Студия, ул. Агмашенебели, центр — годовой договор', area:30, price:350, cur:'USD', url:'https://home.ss.ge/en/real-estate/1-room-Flat-For-Rent-Kobuleti-34245694', date:'21.05'},
+      {kind:'apt', title:'ул. Тависуплеба, новостройка за рынком — 2 комнаты', area:60, price:350, cur:'USD', url:'https://korter.ge/en/apartments-for-rent-kobuleti/601569', date:'22.04'},
+      {kind:'apt', title:'1-я линия, ул. Тамар Мепе 66 — 2 комнаты, вид на море', area:45, price:400, cur:'USD', url:'https://home.ss.ge/en/real-estate/2-room-Flat-For-Rent-Kobuleti-34381858', date:'14.06'},
+      {kind:'apt', title:'Студия, ул. Руставели 140б, 150 м до моря', area:40, price:250, cur:'USD', url:'https://korter.ge/en/apartments-for-rent-kobuleti/696962', date:'10.06'},
+      {kind:'house', title:'Частный дом 4 комнаты (3 спальни), 300 м до моря — без летнего повышения', area:120, price:1000, cur:'USD', url:'https://home.ss.ge/en/real-estate/Private-House-For-Rent-Kobuleti-34629745', date:'07.06'},
+      {kind:'house', title:'Дом 3 комнаты (2 спальни), новостройка, бассейн, гараж', area:150, price:1000, cur:'USD', url:'https://home.ss.ge/en/real-estate/Private-House-For-Rent-Kobuleti-7824353', date:'31.05'},
+      {kind:'house', title:'2-й этаж дома, 4 комнаты (2 спальни), двор 700 м², 250 м до моря', area:80, price:500, cur:'USD', url:'https://home.ss.ge/en/real-estate/Private-House-For-Rent-Kobuleti-8023176', date:'03.06'},
+    ]},
+  zugdidi:{ name:'Зугдиди', short:'Зугдиди',
+    apt:{low:1000, high:1500, cur:'GEL', size:'1–2 спальни, 50–70 м²'},
+    house:{low:800, high:1300, cur:'GEL', size:'3–5 комнат, 100–250 м² + двор'},
+    note:'Не курорт, рынок аренды очень узкий: одновременно ~3–4 квартиры и 15–20 домов. Почти все объявления — в лари, не в долларах. Квартиры публикуются редко; домов в аренду, наоборот, относительно много и они дешевле квартир.',
+    listings:[
+      {kind:'apt', title:'Центр, 8 этаж, новый ремонт — 2 комнаты (1 спальня)', area:65, price:1000, cur:'GEL', url:'https://home.ss.ge/en/real-estate/4147536', date:'10.06'},
+      {kind:'apt', title:'Центр, 2 балкона, меблирована — 3 комнаты (2 спальни)', area:70, price:1500, cur:'GEL', url:'https://home.ss.ge/en/real-estate/31686010', date:'27.05'},
+      {kind:'apt', title:'5 этаж, новый ремонт, меблирована — 2 комнаты (1 спальня)', area:50, price:1000, cur:'GEL', url:'https://home.ss.ge/en/real-estate/35499411', date:'14.05'},
+      {kind:'house', title:'Дом 4 комнаты, 150 м² + двор 1000 м², гараж', area:150, price:1200, cur:'GEL', url:'https://home.ss.ge/en/real-estate/35853640', date:'16.06'},
+      {kind:'house', title:'ул. Чантуриа 5 — дом 5 комнат (3 спальни), 250 м², гараж', area:250, price:1300, cur:'GEL', url:'https://home.ss.ge/en/real-estate/35638367', date:'27.05'},
+      {kind:'house', title:'Центр, дом 3 комнаты, 100 м² + двор 300 м², долгосрочно', area:100, price:1200, cur:'GEL', url:'https://home.ss.ge/en/real-estate/32905910', date:'09.06'},
+      {kind:'house', title:'Дом 4 комнаты (3 спальни), 140 м² + двор 311 м²', area:140, price:800, cur:'GEL', url:'https://home.ss.ge/en/real-estate/35846028', date:'16.06'},
+    ]},
+};
+
+const ORDER = ['tbilisi','batumi','kobuleti','zugdidi'];
+const sel = document.getElementById('citySel');
+ORDER.forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = DATA[k].name; sel.appendChild(o); });
+
+function rangeCard(label, r){
+  const lo = conv(r.low, r.cur), hi = conv(r.high, r.cur);
+  function pair(a,b,sym,pre){ return (pre||'')+fmt(a)+'<span class="dash">–</span>'+(pre||'')+fmt(b)+(sym||''); }
+  return '<div class="range-card">'+
+    '<div class="rc-lab">'+label+' · '+r.size+'</div>'+
+    '<div class="rc-cur"><div class="c-name">в лари / мес</div><div class="c-val">'+pair(lo.gel,hi.gel,' ₾')+'</div></div>'+
+    '<div class="rc-cur"><div class="c-name">в долларах / мес</div><div class="c-val">'+pair(lo.usd,hi.usd,'','$')+'</div></div>'+
+    '<div class="rc-cur"><div class="c-name">в рублях / мес</div><div class="c-val">'+pair(lo.rub,hi.rub,' ₽')+'</div></div>'+
+  '</div>';
+}
+
+function listRows(items){
+  if(!items.length) return '<div class="empty">Проверенных живых объявлений этого типа на дату сбора не нашлось.</div>';
+  let h = '<div class="tbl-wrap"><table><thead><tr><th>Объявление</th><th>Площадь</th><th>₾ / мес</th><th>$ / мес</th><th>₽ / мес</th><th>Ссылка</th></tr></thead><tbody>';
+  items.forEach(l => {
+    const c = conv(l.price, l.cur);
+    const oG = l.cur==='GEL', oU = l.cur==='USD';
+    h += '<tr>'+
+      '<td><div class="li-title">'+l.title+'</div><div class="li-sub">обновлено '+l.date+' · '+srcName(l.url)+'</div></td>'+
+      '<td class="area">'+l.area+' м²</td>'+
+      '<td class="cur '+(oG?'orig':'conv')+'">'+fmt(c.gel)+'</td>'+
+      '<td class="cur '+(oU?'orig':'conv')+'">$'+fmt(c.usd)+'</td>'+
+      '<td class="cur conv">'+fmt(c.rub)+'</td>'+
+      '<td><a class="src-link" href="'+l.url+'" target="_blank" rel="noopener">'+srcName(l.url)+' ↗</a></td>'+
+    '</tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+
+function render(key){
+  const d = DATA[key];
+  const apts = d.listings.filter(l => l.kind==='apt');
+  const houses = d.listings.filter(l => l.kind==='house');
+  document.getElementById('cityMeta').textContent = apts.length+' квартир · '+houses.length+' домов · проверено';
+  document.getElementById('cityView').innerHTML =
+    '<div class="blk">'+
+      '<div class="blk-head"><span class="ico apt">🏢</span><h2>Квартиры</h2><span class="sz">'+d.apt.size+'</span></div>'+
+      rangeCard('Средняя по рынку — квартира', d.apt)+
+      listRows(apts)+
+    '</div>'+
+    '<div class="blk">'+
+      '<div class="blk-head"><span class="ico house">🏡</span><h2>Дома</h2><span class="sz">'+d.house.size+'</span></div>'+
+      rangeCard('Средняя по рынку — дом', d.house)+
+      listRows(houses)+
+    '</div>'+
+    '<div class="note"><b>'+d.name+':</b> '+d.note+'</div>';
+}
+
+sel.addEventListener('change', () => render(sel.value));
+render('tbilisi');
+</script>
+</body>
+</html>
