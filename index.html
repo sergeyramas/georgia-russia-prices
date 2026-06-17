@@ -11,11 +11,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#0d0f14; --surface:#151922; --surface2:#1b2029; --border:#272d39;
-    --text:#e9edf4; --muted:#9aa4b4; --faint:#6b7384;
-    --green:#2ecc8f; --green-bg:rgba(46,204,143,.12);
-    --red:#ff6b6b; --red-bg:rgba(255,107,107,.12);
-    --accent:#5b8def;
+    --bg:#ffffff; --surface:#f7f8fa; --surface2:#eef1f5; --border:#e3e7ee;
+    --text:#1a1f29; --muted:#5a6472; --faint:#8a94a3;
+    --green:#12a06a; --green-bg:rgba(18,160,106,.12);
+    --red:#d83a34; --red-bg:rgba(216,58,52,.10);
+    --accent:#2f6fe0;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -45,7 +45,7 @@
   th:first-child,td:first-child{text-align:left;white-space:normal;min-width:180px}
   thead th{background:var(--surface2);color:var(--muted);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0}
   tbody tr{border-top:1px solid var(--border)}
-  tbody tr:hover{background:rgba(255,255,255,.02)}
+  tbody tr:hover{background:rgba(0,0,0,.025)}
   td.rub{font-weight:600}
   td.gel{color:var(--muted)}
   .diff{font-weight:600;font-size:13px;padding:3px 9px;border-radius:20px;display:inline-block;min-width:62px;text-align:center}
@@ -91,8 +91,8 @@
   <p class="sec-note">Москва = 100. Зелёный — в Тбилиси дешевле, красный — дороже. Виден разрыв: жильё и транспорт в Грузии кратно дешевле, а топливо и молочка — дороже.</p>
   <div class="chart-card">
     <div class="legend">
-      <span><span class="dot" style="background:#2ecc8f"></span>Дешевле Москвы</span>
-      <span><span class="dot" style="background:#ff6b6b"></span>Дороже Москвы</span>
+      <span><span class="dot" style="background:#12a06a"></span>Дешевле Москвы</span>
+      <span><span class="dot" style="background:#d83a34"></span>Дороже Москвы</span>
       <span><span class="dot" style="background:#888;width:16px;height:0;border-top:2px dashed #888;border-radius:0"></span>Москва = 100</span>
     </div>
     <div class="chart-box"><canvas id="idx" role="img" aria-label="Индекс цен Тбилиси к Москве, Москва равна 100"></canvas></div>
@@ -212,13 +212,13 @@ const rows = [
 new Chart(document.getElementById('idx'),{
   type:'bar',
   data:{labels:rows.map(r=>r[0]),datasets:[{data:rows.map(r=>r[1]),
-    backgroundColor:rows.map(r=>r[1]>100?'#ff6b6b':'#2ecc8f'),borderRadius:5,barThickness:24}]},
+    backgroundColor:rows.map(r=>r[1]>100?'#d83a34':'#12a06a'),borderRadius:5,barThickness:24}]},
   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'Индекс '+c.parsed.x+' (Москва = 100)'}}},
     scales:{
-      x:{beginAtZero:true,suggestedMax:160,grid:{color:'rgba(255,255,255,.06)'},
-         ticks:{color:'#9aa4b4'},title:{display:true,text:'Москва = 100',color:'#6b7384'}},
-      y:{grid:{display:false},ticks:{color:'#e9edf4',autoSkip:false,font:{size:13}}}}}
+      x:{beginAtZero:true,suggestedMax:160,grid:{color:'rgba(0,0,0,.07)'},
+         ticks:{color:'#5a6472'},title:{display:true,text:'Москва = 100',color:'#8a94a3'}},
+      y:{grid:{display:false},ticks:{color:'#1a1f29',autoSkip:false,font:{size:13}}}}}
 });
 </script>
 </body>
