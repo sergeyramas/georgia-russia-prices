@@ -124,7 +124,7 @@ document.getElementById('rateBar').innerHTML =
   chip('Курс лари', RATE.gelRub.toFixed(2)+' ₽','/ 1 ₾')+
   chip('Лари в долларах','$'+RATE.gelUsd.toFixed(3),'/ 1 ₾')+
   chip('Доллар', RATE.usdRub.toFixed(2)+' ₽','/ $1')+
-  '<div class="chip"><div class="l">Данные</div><div class="v" style="font-size:14px;font-weight:500">myhome.ge · '+D.meta.date+'</div></div>';
+  '<div class="chip"><div class="l">Источники</div><div class="v" style="font-size:14px;font-weight:500">'+D.meta.sources.join(' + ')+' · '+D.meta.date+'</div></div>';
 function chip(l,v,s){ return '<div class="chip"><div class="l">'+l+'</div><div class="v">'+v+' <small>'+s+'</small></div></div>'; }
 
 const sel = document.getElementById('citySel');
@@ -146,7 +146,7 @@ function listRows(items, unitHdr){
   items.forEach(l=>{
     const oG=l.nat===1, oU=l.nat===2, rub=Math.round(l.gel*RATE.gelRub);
     const title=cap(l.title)||(l.kind==='house'?'Частный дом':'Квартира');
-    h+='<tr><td><div class="li-title">'+title+'</div><div class="li-sub">обновлено '+l.date+' · myhome.ge</div></td>'+
+    h+='<tr><td><div class="li-title">'+title+'</div><div class="li-sub">обновлено '+l.date+' · '+l.src+'</div></td>'+
        '<td class="area">'+l.area+' м²</td>'+
        '<td class="cur '+(oG?'orig':'conv')+'">'+fmt(l.gel)+'</td>'+
        '<td class="cur '+(oU?'orig':'conv')+'">$'+fmt(l.usd)+'</td>'+
@@ -175,7 +175,7 @@ document.querySelectorAll('#dealToggle button').forEach(b=>b.addEventListener('c
 }));
 
 document.getElementById('foot').innerHTML=
-  '<p>Объявления — из официального API портала <a href="https://www.myhome.ge" target="_blank" rel="noopener">myhome.ge</a> ('+D.meta.date+'). Скрипт листает все страницы по каждому городу, типу и виду сделки, отсеивает спам и мусорные лоты; всего в пуле '+fmt(D.meta.total)+' объявлений. «N на рынке» — сколько прошло фильтр (+ = упёрлись в потолок обхода, реально больше); в таблице показаны свежие. Цены ₾/$ — как на портале, ₽ — по курсу ЦБ РФ/XE на '+D.meta.date+'.</p>'+
+  '<p>Объявления собраны из официальных API двух крупнейших порталов Грузии — <a href="https://www.myhome.ge" target="_blank" rel="noopener">myhome.ge</a> и <a href="https://home.ss.ge" target="_blank" rel="noopener">ss.ge</a> ('+D.meta.date+'). Скрипт листает все страницы по каждому городу, типу и виду сделки, отсеивает спам, посуточную аренду и мусорные лоты; всего в пуле '+fmt(D.meta.total)+' объявлений. «N на рынке» — сколько прошло фильтр (+ = упёрлись в потолок обхода, реально больше); источник каждого лота подписан под названием. Цены ₾/$ — как на порталах, ₽ — по курсу ЦБ РФ/XE на '+D.meta.date+'. Одна и та же квартира может встречаться на обоих порталах — межпортальный дедуп не делаем.</p>'+
   '<p style="margin-top:10px">⚠ Ссылки ведут на карточки myhome.ge (ID из их API — объявления реальные). Обновление данных — скриптом <code>build_rent.py</code>. Разгар сезона: в Кобулети долгосрочных квартир мало — почти всё в посуточной аренде.</p>';
 
 render();

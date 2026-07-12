@@ -1,69 +1,127 @@
 #!/usr/bin/env python3
-# Собирает полный пул объявлений с myhome.ge (tnet API) по городам,
-# для аренды и продажи, квартир и домов. Чистит спам, считает диапазоны
-# и счётчики по ВСЕМУ пулу, пишет rent-data.js (window.RENT_DATA).
+# Собирает полный пул объявлений с ДВУХ источников — myhome.ge (tnet API) и
+# ss.ge (LegendSearch API, анонимный OAuth) — по городам, для аренды и продажи,
+# квартир и домов. Чистит спам, считает диапазоны/счётчики по объединённому пулу,
+# пишет rent-data.js (window.RENT_DATA).
 # Обновить сайт: python3 build_rent.py && vercel deploy --prod
-import json, urllib.request, urllib.error
+import json, urllib.request, urllib.parse, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
 GEN_DATE = "12.07.2026"
 RATE = {"gelRub": 29.07, "usdRub": 76.66, "gelUsd": 0.3801, "usdGel": 2.631}
-HDR = {"User-Agent": "Mozilla/5.0", "X-Website-Key": "myhome",
-       "Accept": "application/json", "Referer": "https://www.myhome.ge/", "locale": "ru"}
-MAX_PAGES = 20            # potolok stranic na segment (20*20=400 lotov)
-SAMPLE = 15              # skolko lotov pokazyvat v tablice na segment
+MAX_PAGES = 20
+SAMPLE = 16
 
-CITIES = [("tbilisi", 1, "Тбилиси"), ("batumi", 15, "Батуми"),
-          ("kobuleti", 94, "Кобулети"), ("poti", 91, "Поти"), ("zugdidi", 39, "Зугдиди")]
-DEALS = [("rent", 2), ("sale", 1)]
-TYPES = [("apt", 1), ("house", 2)]
-
-def api(city, deal, ret, page):
-    url = (f"https://api-statements.tnet.ge/v1/statements?page={page}"
-           f"&deal_types={deal}&real_estate_types={ret}&cities={city}&limit=100")
-    req = urllib.request.Request(url, headers=HDR)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read().decode())["data"]["data"]
-
-def pull(city, deal, ret):
-    seen, rows = set(), []
-    for page in range(1, MAX_PAGES + 1):
+def fetch(req):
+    for attempt in range(3):
         try:
-            batch = api(city, deal, ret, page)
+            return json.loads(urllib.request.urlopen(req, timeout=30).read().decode())
+        except Exception:
+            if attempt == 2:
+                raise
+    return None
+
+CITIES = [("tbilisi", "Тбилиси"), ("batumi", "Батуми"),
+          ("kobuleti", "Кобулети"), ("poti", "Поти"), ("zugdidi", "Зугдиди")]
+DEALS = ["rent", "sale"]
+TYPES = ["apt", "house"]
+
+# --- source config: (city ids), (deal codes), (type codes) ---
+MY_CITY = {"tbilisi": 1, "batumi": 15, "kobuleti": 94, "poti": 91, "zugdidi": 39}
+MY_DEAL = {"rent": 2, "sale": 1}
+MY_TYPE = {"apt": 1, "house": 2}
+SS_CITY = {"tbilisi": 95, "batumi": 96, "kobuleti": 14, "poti": 101, "zugdidi": 100}
+SS_DEAL = {"rent": 1, "sale": 4}
+SS_TYPE = {"apt": 5, "house": 4}
+
+# ---------- myhome.ge (tnet) ----------
+MY_HDR = {"User-Agent": "Mozilla/5.0", "X-Website-Key": "myhome",
+          "Accept": "application/json", "Referer": "https://www.myhome.ge/", "locale": "ru"}
+
+def my_pull(city, deal, kind):
+    seen, out = set(), []
+    for page in range(1, MAX_PAGES + 1):
+        url = (f"https://api-statements.tnet.ge/v1/statements?page={page}"
+               f"&deal_types={MY_DEAL[deal]}&real_estate_types={MY_TYPE[kind]}&cities={MY_CITY[city]}&limit=100")
+        try:
+            batch = fetch(urllib.request.Request(url, headers=MY_HDR))["data"]["data"]
         except Exception:
             break
         if not batch:
             break
         for r in batch:
-            if r["id"] not in seen:
-                seen.add(r["id"]); rows.append(r)
-        if len(batch) < 20:      # poslednyaya nepolnaya stranica
+            if r["id"] in seen:
+                continue
+            seen.add(r["id"])
+            try:
+                gel = r["price"]["1"]["price_total"]; usd = r["price"]["2"]["price_total"]
+            except Exception:
+                continue
+            out.append({"kind": kind, "src": "myhome.ge",
+                "title": (r.get("dynamic_title") or "").replace("Сдается ", "").replace("Продается ", "").strip(),
+                "area": r.get("area") or 0, "gel": gel, "usd": usd, "nat": r.get("currency_id"),
+                "url": f"https://www.myhome.ge/ru/pr/{r['id']}", "date": (r.get("last_updated") or "")[:10]})
+        if len(batch) < 20:
             break
-    return rows
+    return out
 
-def keep(r, deal_slug):
-    try:
-        gel = r["price"]["1"]["price_total"]; usd = r["price"]["2"]["price_total"]
-        area = r.get("area") or 0
-        if not gel or not usd or area < 15:
-            return None
-        if deal_slug == "rent":
+# ---------- ss.ge (LegendSearch, anon OAuth) ----------
+def ss_token():
+    body = urllib.parse.urlencode({"grant_type": "client_credentials", "client_id": "ssweb",
+                                   "client_secret": "t5w42KQQjowNRYkycrrX"}).encode()
+    req = urllib.request.Request("https://account.ss.ge/connect/token", data=body,
+                                 headers={"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "Mozilla/5.0"})
+    return json.loads(urllib.request.urlopen(req, timeout=25).read().decode())["access_token"]
+
+def ss_pull(city, deal, kind, token):
+    H = {"Authorization": "Bearer " + token, "User-Agent": "Mozilla/5.0", "Content-Type": "application/json"}
+    seen, out = set(), []
+    for page in range(1, MAX_PAGES + 1):
+        payload = {"realEstateDealType": SS_DEAL[deal], "realEstateType": SS_TYPE[kind],
+                   "cityIdList": [SS_CITY[city]], "page": page, "pageSize": 30}
+        try:
+            d = fetch(urllib.request.Request(
+                "https://api-gateway.ss.ge/v1/RealEstate/LegendSearch", data=json.dumps(payload).encode(), headers=H))
+            batch = d.get("realStateItemModel") or []
+        except Exception:
+            break
+        if not batch:
+            break
+        for r in batch:
+            aid = r.get("applicationId")
+            if aid in seen:
+                continue
+            seen.add(aid)
+            pr = r.get("price") or {}
+            out.append({"kind": kind, "src": "ss.ge",
+                "title": ("Квартира" if kind == "apt" else "Частный дом") + (f", {r.get('numberOfBedrooms')} сп." if r.get("numberOfBedrooms") else ""),
+                "area": r.get("totalArea") or 0, "gel": pr.get("priceGeo") or 0, "usd": pr.get("priceUsd") or 0,
+                "nat": 1 if pr.get("currencyType") == 1 else 2,
+                "url": f"https://home.ss.ge/ru/real-estate/{aid}", "date": (r.get("orderDate") or "")[:10]})
+        if len(batch) < 30:
+            break
+    return out
+
+# ---------- shared spam filter ----------
+def clean(items, deal):
+    out = []
+    for x in items:
+        gel, usd, area = x["gel"], x["usd"], x["area"]
+        if not gel or not usd or not area or area < 15:
+            continue
+        if deal == "rent":
             ppm = gel / area
-            if gel < 300 or ppm < 4 or ppm > 150:   # spam / posutochka-kak-mesyac
-                return None
-        else:  # sale
+            if gel < 300 or ppm < 4 or ppm > 150:
+                continue
+        else:
             ppm = usd / area
             if usd < 8000 or ppm < 150 or ppm > 9000:
-                return None
-        return {"kind": None, "title": (r.get("dynamic_title") or "").replace("Сдается ", "").replace("Продается ", "").strip(),
-                "area": area, "gel": round(gel), "usd": round(usd), "nat": r.get("currency_id"),
-                "url": f"https://www.myhome.ge/ru/pr/{r['id']}",
-                "date": (r.get("last_updated") or "")[:10]}
-    except Exception:
-        return None
+                continue
+        out.append({**x, "gel": round(gel), "usd": round(usd)})
+    return out
 
 def pct(vals, p):
-    vals = sorted(vals);
+    vals = sorted(vals)
     return vals[min(len(vals) - 1, int(round(p / 100 * (len(vals) - 1))))] if vals else 0
 
 def rng(items):
@@ -73,57 +131,53 @@ def rng(items):
     return {"low": int(round(lo / step) * step), "high": int(round(hi / step) * step), "cur": "USD"}
 
 NOTE = {
- ("tbilisi", "rent"): "Ваке/Вера дороже, спальные районы (Дигоми, Глдани) дешевле.",
- ("tbilisi", "sale"): "Вторичка и новостройки. Центр и Ваке — верх диапазона.",
- ("batumi", "rent"): "Ближе к морю и New Boulevard — дороже; горгород и Хелвачаури дешевле.",
- ("batumi", "sale"): "Много новостроек у моря; апартаменты с видом — верх рынка.",
  ("kobuleti", "rent"): "Муниципалитет Кобулети (Чакви, Цихисдзири, Очхамури). Июльский пик: долгосрочных квартир мало — почти всё в посуточной.",
- ("kobuleti", "sale"): "Курортные новостройки у моря; частный сектор дешевле.",
- ("poti", "rent"): "Портовый город, не курорт — рынок скромный, цены ниже Батуми.",
- ("poti", "sale"): "Небольшой рынок, преимущественно вторичка.",
  ("zugdidi", "rent"): "Не курорт, рынок узкий, почти всё в лари. Домов в аренду мало.",
- ("zugdidi", "sale"): "Узкий рынок Самегрело, в основном частные дома и вторичка.",
+ ("poti", "rent"): "Портовый город, не курорт — рынок скромный, цены ниже Батуми.",
 }
 
-def segment(args):
-    slug, cid, deal_slug, deal_id, kind, ret = args
-    raw = pull(cid, deal_id, ret)
-    items = [x for x in (keep(r, deal_slug) for r in raw) if x]
-    for x in items:
-        x["kind"] = kind
+TOKEN = ss_token()
+
+def segment(job):
+    city, deal, kind = job
+    my = my_pull(city, deal, kind)
+    ss = ss_pull(city, deal, kind, TOKEN)
+    capped = len(my) >= MAX_PAGES * 20 or len(ss) >= MAX_PAGES * 30
+    items = clean(my + ss, deal)
     items.sort(key=lambda x: x["usd"])
     sample = items[:SAMPLE]
     for x in sample:
-        d = x["date"]; x["date"] = (d[8:10] + "." + d[5:7]) if d else ""
-    return (slug, deal_slug, kind, {"range": rng(items), "count": len(items),
-            "capped": len(raw) >= MAX_PAGES * 20, "sample": [{k: v for k, v in x.items() if k != "nat" or True} for x in sample]})
+        d = x["date"]; x["date"] = (d[8:10] + "." + d[5:7]) if d and len(d) >= 10 else ""
+    by_src = {}
+    for x in items:
+        by_src[x["src"]] = by_src.get(x["src"], 0) + 1
+    return (city, deal, kind, {**rng(items), "count": len(items), "capped": capped,
+            "by_src": by_src, "size": "1–3 комнаты" if kind == "apt" else "3+ комнаты / коттедж",
+            "sample": sample})
 
-jobs = [(slug, cid, ds, di, kind, ret) for slug, cid, name in CITIES
-        for ds, di in DEALS for kind, ret in TYPES]
-with ThreadPoolExecutor(max_workers=8) as ex:
+jobs = [(c, d, k) for c, _ in CITIES for d in DEALS for k in TYPES]
+with ThreadPoolExecutor(max_workers=5) as ex:
     results = list(ex.map(segment, jobs))
 
-DATA = {}
-name_of = {slug: name for slug, cid, name in CITIES}
-for slug, cid, name in CITIES:
-    DATA[slug] = {"name": name}
-    for ds, _ in DEALS:
-        DATA[slug][ds] = {"apt": {}, "house": {}, "listings": [], "note": NOTE.get((slug, ds), "")}
-for slug, ds, kind, seg in results:
-    node = DATA[slug][ds]
-    node[kind] = {**seg["range"], "count": seg["count"], "capped": seg["capped"],
-                  "size": "1–3 комнаты" if kind == "apt" else "3+ комнаты / коттедж"}
+DATA = {c: {"name": n} for c, n in CITIES}
+for c, n in CITIES:
+    for d in DEALS:
+        DATA[c][d] = {"apt": {}, "house": {}, "listings": [], "note": NOTE.get((c, d), "")}
+for city, deal, kind, seg in results:
+    node = DATA[city][deal]
+    node[kind] = {k: v for k, v in seg.items() if k != "sample"}
     node["listings"] += seg["sample"]
 
-total = sum(DATA[s][d][k]["count"] for s in DATA for d, _ in DEALS for k in ("apt", "house"))
-out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total, "order": [s for s, _, _ in CITIES]},
+total = sum(DATA[c][d][k]["count"] for c in DATA for d in DEALS for k in TYPES)
+out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total,
+                "sources": ["myhome.ge", "ss.ge"], "order": [c for c, _ in CITIES]},
        "cities": DATA}
 with open("rent-data.js", "w", encoding="utf-8") as f:
     f.write("window.RENT_DATA = " + json.dumps(out, ensure_ascii=False) + ";")
 
-print(f"generated rent-data.js — total cleaned lots: {total}")
-for slug, cid, name in CITIES:
-    for ds, _ in DEALS:
-        a, h = DATA[slug][ds]["apt"], DATA[slug][ds]["house"]
-        print(f"  {name:9} {ds:4} apt ${a['low']}-{a['high']} (n={a['count']}{'+' if a['capped'] else ''})  "
+print(f"generated rent-data.js — total cleaned lots (myhome+ss.ge): {total}")
+for c, n in CITIES:
+    for d in DEALS:
+        a, h = DATA[c][d]["apt"], DATA[c][d]["house"]
+        print(f"  {n:9} {d:4} apt ${a['low']}-{a['high']} (n={a['count']}{'+' if a['capped'] else ''} {a['by_src']})  "
               f"house ${h['low']}-{h['high']} (n={h['count']}{'+' if h['capped'] else ''})")
