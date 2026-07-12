@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Аренда жилья в Грузии — Тбилиси, Батуми, Кобулети, Поти, Зугдиди (июль 2026)</title>
-<meta name="description" content="Стоимость аренды квартир и домов в Грузии: Тбилиси, Батуми, Кобулети, Поти, Зугдиди. Реальные объявления с myhome.ge, средние диапазоны рынка в лари, долларах и рублях. Июль 2026.">
+<title>Аренда и продажа жилья в Грузии — Тбилиси, Батуми, Кобулети, Поти, Зугдиди</title>
+<meta name="description" content="Аренда и продажа квартир и домов в Грузии: Тбилиси, Батуми, Кобулети, Поти, Зугдиди. Тысячи объявлений с myhome.ge, диапазоны рынка в лари, долларах и рублях, прямые ссылки.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,10 +30,13 @@
   .chip .l{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
   .chip .v{font-size:18px;font-weight:600;margin-top:2px}
   .chip .v small{font-size:12px;color:var(--muted);font-weight:400}
-  .picker{position:sticky;top:0;z-index:20;background:var(--bg);padding:18px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .picker{position:sticky;top:0;z-index:20;background:var(--bg);padding:16px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .picker label{font-size:14px;color:var(--muted);font-weight:500}
-  select{font-family:inherit;font-size:16px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 16px;cursor:pointer;min-width:230px}
+  select{font-family:inherit;font-size:16px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 16px;cursor:pointer;min-width:210px}
   select:focus{outline:none;border-color:var(--accent)}
+  .toggle{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px}
+  .toggle button{font-family:inherit;font-size:14px;font-weight:600;color:var(--muted);background:transparent;border:none;padding:8px 16px;border-radius:8px;cursor:pointer}
+  .toggle button.active{background:var(--bg);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.08)}
   .city-meta{font-size:13px;color:var(--faint)}
   section.city{padding:30px 0}
   .blk{margin-bottom:34px}
@@ -68,7 +71,7 @@
   .empty{padding:18px;text-align:center;color:var(--faint);font-size:14px;background:var(--surface);border:1px dashed var(--border);border-radius:12px}
   footer{padding:34px 0 60px;color:var(--faint);font-size:13px;border-top:1px solid var(--border);margin-top:20px}
   footer a{color:var(--muted)}
-  @media(max-width:600px){header{padding:24px 0}select{min-width:0;width:100%}}
+  @media(max-width:600px){header{padding:24px 0}select{min-width:0;flex:1}}
 </style>
 </head>
 <body>
@@ -76,102 +79,106 @@
 
 <nav class="topnav">
   <a href="index.html">← Сравнение цен Грузия vs РФ</a>
-  <a href="rent.html" class="active">Аренда жилья</a>
+  <a href="rent.html" class="active">Аренда и продажа жилья</a>
 </nav>
 
 <header>
-  <div class="kicker">Рынок аренды · портал myhome.ge · июль 2026</div>
-  <h1>Аренда жилья в Грузии</h1>
-  <p class="sub">Сколько стоит снять квартиру и дом в Тбилиси, Батуми, Кобулети, Поти и Зугдиди. Средние диапазоны по рынку и конкретные объявления с прямыми ссылками. Данные взяты пачкой из официального API myhome.ge — крупнейшего портала недвижимости Грузии.</p>
-  <div class="rate-bar">
-    <div class="chip"><div class="l">Курс лари</div><div class="v">29.07 ₽ <small>/ 1 ₾</small></div></div>
-    <div class="chip"><div class="l">Лари в долларах</div><div class="v">$0.380 <small>/ 1 ₾</small></div></div>
-    <div class="chip"><div class="l">Доллар</div><div class="v">76.66 ₽ <small>/ $1</small></div></div>
-    <div class="chip"><div class="l">Источник курса</div><div class="v" style="font-size:14px;font-weight:500">ЦБ РФ / XE · 12.07.2026</div></div>
-  </div>
+  <div class="kicker">Рынок жилья · портал myhome.ge · июль 2026</div>
+  <h1>Аренда и продажа жилья в Грузии</h1>
+  <p class="sub">Квартиры и дома в Тбилиси, Батуми, Кобулети, Поти и Зугдиди — аренда и покупка. Диапазоны по рынку и свежие объявления с прямыми ссылками. Данные собраны пачкой из официального API myhome.ge, обход по всем страницам с чисткой спама.</p>
+  <div class="rate-bar" id="rateBar"></div>
 </header>
 
 <div class="picker">
   <label for="citySel">Город:</label>
   <select id="citySel"></select>
+  <div class="toggle" id="dealToggle">
+    <button data-deal="rent" class="active">Аренда</button>
+    <button data-deal="sale">Продажа</button>
+  </div>
   <span class="city-meta" id="cityMeta"></span>
 </div>
 
 <section class="city" id="cityView"></section>
 
-<footer>
-  <p>Объявления — из официального API портала <a href="https://www.myhome.ge" target="_blank" rel="noopener">myhome.ge</a> (12 июля 2026, долгосрочная аренда). По каждому городу отфильтрован спам и мусорные лоты (дома по 30–450 ₾ и т.п.); в таблице показаны свежие объявления, счётчик «на рынке» — сколько всего прошло фильтр. Цены ₾ и $ — как на портале (он сам пересчитывает по курсу дня); ₽ — по курсу ЦБ РФ на 12.07.2026.</p>
-  <p style="margin-top:10px">⚠ Ссылки ведут на карточки myhome.ge (ID из их API — объявления реальные). Прямую проверку скриптом портал блокирует через Cloudflare, но в браузере ссылки открываются. Идёт разгар сезона: в Кобулети долгосрочных квартир мало — почти всё в посуточной аренде.</p>
-</footer>
+<footer id="foot"></footer>
 
 </div>
 
+<script src="rent-data.js"></script>
 <script>
-const RATE = { gelUsd:0.3801, gelRub:29.07, usdGel:2.631, usdRub:76.66 };
+const D = window.RENT_DATA;
+const RATE = D.meta.rate;
+const ORDER = D.meta.order;
+let curDeal = 'rent';
+
 const fmt = n => Math.round(n).toLocaleString('ru-RU');
 function conv(price, cur){
   if(cur==='USD') return { usd:price, gel:price*RATE.usdGel, rub:price*RATE.usdRub };
   return { gel:price, usd:price*RATE.gelUsd, rub:price*RATE.gelRub };
 }
-function srcName(url){ return url.indexOf('myhome')>-1 ? 'myhome.ge' : (url.indexOf('ss.ge')>-1 ? 'ss.ge' : 'источник'); }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function cnt(seg){ return fmt(seg.count)+(seg.capped?'+':''); }
 
-const DATA = {"tbilisi": {"name": "Тбилиси", "apt": {"low": 460, "high": 2000, "cur": "USD", "size": "1–3 комнаты", "count": 20}, "house": {"low": 380, "high": 5000, "cur": "USD", "size": "3+ комнаты / коттедж", "count": 20}, "note": "Данные — портал myhome.ge (крупнейший в Грузии), долгосрочная аренда. Ваке/Вера дороже, спальные районы (Дигоми, Глдани) дешевле.", "listings": [{"kind": "apt", "title": "1 комнатная квартира в сабуртало", "area": 31, "gel": 900, "usd": 341, "rub": 26163, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25315391", "date": "12.07"}, {"kind": "apt", "title": "2 комнатная квартира в диди дигоми", "area": 60, "gel": 1187, "usd": 450, "rub": 34506, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25435006", "date": "12.07"}, {"kind": "apt", "title": "3 комнатная квартира в мухиани", "area": 48, "gel": 1200, "usd": 455, "rub": 34884, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25367721", "date": "12.07"}, {"kind": "apt", "title": "2 комнатная квартира в варкетили", "area": 60, "gel": 1500, "usd": 569, "rub": 43605, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25285633", "date": "12.07"}, {"kind": "apt", "title": "2 комнатная квартира в сабуртало", "area": 80, "gel": 1582, "usd": 600, "rub": 45989, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25328467", "date": "12.07"}, {"kind": "apt", "title": "2 комнатная квартира в сабуртало", "area": 80, "gel": 1582, "usd": 600, "rub": 45989, "nat": 2, "url": "https://www.myhome.ge/ru/pr/23330027", "date": "12.07"}, {"kind": "apt", "title": "3 комнатная квартира в сабуртало", "area": 100, "gel": 1714, "usd": 650, "rub": 49826, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25433952", "date": "12.07"}, {"kind": "apt", "title": "2 комнатная квартира в сабуртало", "area": 50, "gel": 1714, "usd": 650, "rub": 49826, "nat": 2, "url": "https://www.myhome.ge/ru/pr/22158421", "date": "12.07"}, {"kind": "house", "title": "1 комнатная частный дом в навтлуги", "area": 35, "gel": 600, "usd": 228, "rub": 17442, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25380433", "date": "07.07"}, {"kind": "house", "title": "2 комнатная частный дом в тбилиси", "area": 30, "gel": 650, "usd": 246, "rub": 18896, "nat": 1, "url": "https://www.myhome.ge/ru/pr/21248568", "date": "12.07"}, {"kind": "house", "title": "3 комнатная частный дом в исани", "area": 70, "gel": 1000, "usd": 379, "rub": 29070, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24706419", "date": "11.07"}, {"kind": "house", "title": "2 комнатная частный дом в кукия", "area": 65, "gel": 1300, "usd": 493, "rub": 37791, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25242070", "date": "12.07"}, {"kind": "house", "title": "4 комнатная частный дом в сабуртало", "area": 120, "gel": 2110, "usd": 800, "rub": 61338, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25394079", "date": "11.07"}, {"kind": "house", "title": "5 комнатная частный дом в орхеви", "area": 90, "gel": 2250, "usd": 853, "rub": 65408, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25368746", "date": "06.07"}, {"kind": "house", "title": "4 комнатная частный дом в коджори", "area": 80, "gel": 3165, "usd": 1200, "rub": 92007, "nat": 2, "url": "https://www.myhome.ge/ru/pr/24621917", "date": "11.07"}, {"kind": "house", "title": "7 комнатная частный дом в ваке", "area": 300, "gel": 3956, "usd": 1500, "rub": 115001, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25436752", "date": "11.07"}]}, "batumi": {"name": "Батуми", "apt": {"low": 450, "high": 1000, "cur": "USD", "size": "1–3 комнаты", "count": 18}, "house": {"low": 320, "high": 2000, "cur": "USD", "size": "3+ комнаты / коттедж", "count": 19}, "note": "myhome.ge. Ближе к морю и New Boulevard — дороже; горгород и Хелвачаури дешевле. Домов много в частном секторе.", "listings": [{"kind": "apt", "title": "1 комнатная квартира в батуми", "area": 25, "gel": 923, "usd": 350, "rub": 26832, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25379864", "date": "12.07"}, {"kind": "apt", "title": "2 комнатная квартира в батуми", "area": 35, "gel": 1000, "usd": 379, "rub": 29070, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25435878", "date": "11.07"}, {"kind": "apt", "title": "1 комнатная квартира в батуми", "area": 33, "gel": 1187, "usd": 450, "rub": 34506, "nat": 2, "url": "https://www.myhome.ge/ru/pr/21322789", "date": "07.07"}, {"kind": "apt", "title": "1 комнатная квартира в батуми", "area": 35, "gel": 1319, "usd": 500, "rub": 38343, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25438000", "date": "12.07"}, {"kind": "apt", "title": "1 комнатная квартира в батуми", "area": 32, "gel": 1319, "usd": 500, "rub": 38343, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25434886", "date": "12.07"}, {"kind": "apt", "title": "2 комнатная квартира в батуми", "area": 45, "gel": 1319, "usd": 500, "rub": 38343, "nat": 2, "url": "https://www.myhome.ge/ru/pr/19684791", "date": "12.07"}, {"kind": "apt", "title": "3 комнатная квартира в батуми", "area": 50, "gel": 1319, "usd": 500, "rub": 38343, "nat": 2, "url": "https://www.myhome.ge/ru/pr/19882282", "date": "12.07"}, {"kind": "apt", "title": "1 комнатная квартира в батуми", "area": 32, "gel": 1319, "usd": 500, "rub": 38343, "nat": 2, "url": "https://www.myhome.ge/ru/pr/24219945", "date": "09.07"}, {"kind": "house", "title": "1 комнатная частный дом в батуми", "area": 50, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25436303", "date": "11.07"}, {"kind": "house", "title": "1 комнатная частный дом в батуми", "area": 50, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25436288", "date": "11.07"}, {"kind": "house", "title": "2 комнатная частный дом в батуми", "area": 55, "gel": 850, "usd": 322, "rub": 24710, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24855037", "date": "21.06"}, {"kind": "house", "title": "2 комнатная частный дом в батуми", "area": 45, "gel": 1055, "usd": 400, "rub": 30669, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25437179", "date": "12.07"}, {"kind": "house", "title": "2 комнатная частный дом в батуми", "area": 50, "gel": 1055, "usd": 400, "rub": 30669, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25436499", "date": "11.07"}, {"kind": "house", "title": "5 комнатная частный дом в батуми", "area": 150, "gel": 1300, "usd": 493, "rub": 37791, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25436591", "date": "11.07"}, {"kind": "house", "title": "3 комнатная частный дом в батуми", "area": 85, "gel": 1319, "usd": 500, "rub": 38343, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25436727", "date": "11.07"}, {"kind": "house", "title": "3 комнатная частный дом в батуми", "area": 300, "gel": 1450, "usd": 550, "rub": 42152, "nat": 2, "url": "https://www.myhome.ge/ru/pr/18776438", "date": "12.07"}]}, "kobuleti": {"name": "Кобулети", "apt": {"low": 300, "high": 500, "cur": "USD", "size": "1–3 комнаты", "count": 3}, "house": {"low": 800, "high": 1500, "cur": "USD", "size": "3+ комнаты / коттедж", "count": 7}, "note": "myhome.ge, муниципалитет Кобулети (включая прибрежные Чакви, Цихисдзири, Очхамури). Июльский пик: долгосрочных КВАРТИР мало (почти всё в посуточной), зато домов достаточно.", "listings": [{"kind": "apt", "title": "2 комнатная квартира в кобулети", "area": 55, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25256293", "date": "25.06"}, {"kind": "apt", "title": "2 комнатная квартира в кобулети", "area": 70, "gel": 1000, "usd": 379, "rub": 29070, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24821758", "date": "25.06"}, {"kind": "apt", "title": "5 комнатная квартира в кобулети", "area": 150, "gel": 1319, "usd": 500, "rub": 38343, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25406998", "date": "09.07"}, {"kind": "house", "title": "5 комнатная частный дом в кобулети", "area": 150, "gel": 1846, "usd": 700, "rub": 53663, "nat": 2, "url": "https://www.myhome.ge/ru/pr/23381410", "date": "12.06"}, {"kind": "house", "title": "4 комнатная частный дом в кобулети", "area": 120, "gel": 2110, "usd": 800, "rub": 61338, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25433472", "date": "11.07"}, {"kind": "house", "title": "3 комнатная частный дом в кобулети", "area": 70, "gel": 2110, "usd": 800, "rub": 61338, "nat": 2, "url": "https://www.myhome.ge/ru/pr/20973357", "date": "08.07"}, {"kind": "house", "title": "6 комнатная частный дом в кобулети", "area": 180, "gel": 2637, "usd": 1000, "rub": 76658, "nat": 2, "url": "https://www.myhome.ge/ru/pr/13600350", "date": "11.07"}, {"kind": "house", "title": "4 комнатная частный дом в кобулети", "area": 120, "gel": 2637, "usd": 1000, "rub": 76658, "nat": 2, "url": "https://www.myhome.ge/ru/pr/24726740", "date": "05.07"}, {"kind": "house", "title": "8 комнатная частный дом в кобулети", "area": 350, "gel": 3956, "usd": 1500, "rub": 115001, "nat": 2, "url": "https://www.myhome.ge/ru/pr/21444266", "date": "12.07"}, {"kind": "house", "title": "8 комнатная частный дом в кобулети", "area": 350, "gel": 4615, "usd": 1750, "rub": 134158, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25156215", "date": "16.06"}]}, "poti": {"name": "Поти", "apt": {"low": 230, "high": 490, "cur": "USD", "size": "1–3 комнаты", "count": 19}, "house": {"low": 460, "high": 1200, "cur": "USD", "size": "3+ комнаты / коттедж", "count": 5}, "note": "myhome.ge. Портовый город, не курорт — рынок скромный, но аренда есть; цены заметно ниже Батуми.", "listings": [{"kind": "apt", "title": "2 комнатная квартира в фоты", "area": 45, "gel": 600, "usd": 228, "rub": 17442, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25382192", "date": "07.07"}, {"kind": "apt", "title": "3 комнатная квартира в фоты", "area": 60, "gel": 600, "usd": 228, "rub": 17442, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24425908", "date": "23.06"}, {"kind": "apt", "title": "2 комнатная квартира в фоты", "area": 50, "gel": 600, "usd": 228, "rub": 17442, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24468928", "date": "23.06"}, {"kind": "apt", "title": "2 комнатная квартира в фоты", "area": 50, "gel": 700, "usd": 265, "rub": 20349, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24173770", "date": "30.06"}, {"kind": "apt", "title": "2 комнатная квартира в фоты", "area": 45, "gel": 700, "usd": 265, "rub": 20349, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24495811", "date": "30.06"}, {"kind": "apt", "title": "2 комнатная квартира в фоты", "area": 60, "gel": 700, "usd": 265, "rub": 20349, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24925295", "date": "30.06"}, {"kind": "apt", "title": "3 комнатная квартира в фоты", "area": 65, "gel": 750, "usd": 284, "rub": 21802, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25435268", "date": "11.07"}, {"kind": "apt", "title": "2 комнатная квартира в фоты", "area": 60, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24898479", "date": "30.06"}, {"kind": "house", "title": "5 комнатная частный дом в фоты", "area": 100, "gel": 1200, "usd": 455, "rub": 34884, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25234437", "date": "25.06"}, {"kind": "house", "title": "4 комнатная частный дом в фоты", "area": 80, "gel": 1500, "usd": 569, "rub": 43605, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24384444", "date": "23.06"}, {"kind": "house", "title": "4 комнатная частный дом в фоты", "area": 75, "gel": 1800, "usd": 683, "rub": 52326, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25228219", "date": "22.06"}, {"kind": "house", "title": "7 комнатная частный дом в фоты", "area": 100, "gel": 2000, "usd": 758, "rub": 58140, "nat": 1, "url": "https://www.myhome.ge/ru/pr/23460203", "date": "23.06"}, {"kind": "house", "title": "5 комнатная частный дом в фоты", "area": 480, "gel": 3165, "usd": 1200, "rub": 92007, "nat": 2, "url": "https://www.myhome.ge/ru/pr/24937474", "date": "29.06"}]}, "zugdidi": {"name": "Зугдиди", "apt": {"low": 300, "high": 530, "cur": "USD", "size": "1–3 комнаты", "count": 8}, "house": {"low": 460, "high": 460, "cur": "USD", "size": "3+ комнаты / коттедж", "count": 3}, "note": "myhome.ge. Не курорт, рынок узкий. Почти всё в лари. Домов в долгосрочную аренду мало.", "listings": [{"kind": "apt", "title": "2 комнатная квартира в зугдиди", "area": 60, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/19631676", "date": "02.07"}, {"kind": "apt", "title": "2 комнатная квартира в зугдиди", "area": 60, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25307264", "date": "30.06"}, {"kind": "apt", "title": "2 комнатная квартира в зугдиди", "area": 58, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/18256373", "date": "29.06"}, {"kind": "apt", "title": "2 комнатная квартира в зугдиди", "area": 55, "gel": 800, "usd": 303, "rub": 23256, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25264343", "date": "25.06"}, {"kind": "apt", "title": "2 комнатная квартира в зугдиди", "area": 58, "gel": 900, "usd": 341, "rub": 26163, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25381870", "date": "07.07"}, {"kind": "apt", "title": "3 комнатная квартира в зугдиди", "area": 80, "gel": 1000, "usd": 379, "rub": 29070, "nat": 1, "url": "https://www.myhome.ge/ru/pr/24400552", "date": "22.06"}, {"kind": "apt", "title": "2 комнатная квартира в зугдиди", "area": 70, "gel": 1400, "usd": 531, "rub": 40698, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25247282", "date": "24.06"}, {"kind": "apt", "title": "3 комнатная квартира в зугдиди", "area": 70, "gel": 1450, "usd": 550, "rub": 42152, "nat": 2, "url": "https://www.myhome.ge/ru/pr/25196946", "date": "19.06"}, {"kind": "house", "title": "5 комнатная частный дом в зугдиди", "area": 150, "gel": 1200, "usd": 455, "rub": 34884, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25436809", "date": "11.07"}, {"kind": "house", "title": "6 комнатная частный дом в зугдиди", "area": 250, "gel": 1200, "usd": 455, "rub": 34884, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25328284", "date": "01.07"}, {"kind": "house", "title": "", "area": 150, "gel": 1200, "usd": 455, "rub": 34884, "nat": 1, "url": "https://www.myhome.ge/ru/pr/25159635", "date": "16.06"}]}};
+document.getElementById('rateBar').innerHTML =
+  chip('Курс лари', RATE.gelRub.toFixed(2)+' ₽','/ 1 ₾')+
+  chip('Лари в долларах','$'+RATE.gelUsd.toFixed(3),'/ 1 ₾')+
+  chip('Доллар', RATE.usdRub.toFixed(2)+' ₽','/ $1')+
+  '<div class="chip"><div class="l">Данные</div><div class="v" style="font-size:14px;font-weight:500">myhome.ge · '+D.meta.date+'</div></div>';
+function chip(l,v,s){ return '<div class="chip"><div class="l">'+l+'</div><div class="v">'+v+' <small>'+s+'</small></div></div>'; }
 
-const ORDER = ['tbilisi','batumi','kobuleti','poti','zugdidi'];
 const sel = document.getElementById('citySel');
-ORDER.forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = DATA[k].name; sel.appendChild(o); });
+ORDER.forEach(k => { const o=document.createElement('option'); o.value=k; o.textContent=D.cities[k].name; sel.appendChild(o); });
 
-function rangeCard(label, r){
-  const lo = conv(r.low, r.cur), hi = conv(r.high, r.cur);
-  function pair(a,b,sym,pre){ return (pre||'')+fmt(a)+'<span class="dash">–</span>'+(pre||'')+fmt(b)+(sym||''); }
+function rangeCard(label, r, unit){
+  const lo=conv(r.low,r.cur), hi=conv(r.high,r.cur);
+  const pair=(a,b,sym,pre)=>(pre||'')+fmt(a)+'<span class="dash">–</span>'+(pre||'')+fmt(b)+(sym||'');
   return '<div class="range-card">'+
     '<div class="rc-lab">'+label+' · '+r.size+'</div>'+
-    '<div class="rc-cur"><div class="c-name">в лари / мес</div><div class="c-val">'+pair(lo.gel,hi.gel,' ₾')+'</div></div>'+
-    '<div class="rc-cur"><div class="c-name">в долларах / мес</div><div class="c-val">'+pair(lo.usd,hi.usd,'','$')+'</div></div>'+
-    '<div class="rc-cur"><div class="c-name">в рублях / мес</div><div class="c-val">'+pair(lo.rub,hi.rub,' ₽')+'</div></div>'+
+    '<div class="rc-cur"><div class="c-name">в лари'+unit+'</div><div class="c-val">'+pair(lo.gel,hi.gel,' ₾')+'</div></div>'+
+    '<div class="rc-cur"><div class="c-name">в долларах'+unit+'</div><div class="c-val">'+pair(lo.usd,hi.usd,'','$')+'</div></div>'+
+    '<div class="rc-cur"><div class="c-name">в рублях'+unit+'</div><div class="c-val">'+pair(lo.rub,hi.rub,' ₽')+'</div></div>'+
   '</div>';
 }
-
-function listRows(items){
-  if(!items.length) return '<div class="empty">Долгосрочных объявлений этого типа на дату сбора не нашлось.</div>';
-  let h = '<div class="tbl-wrap"><table><thead><tr><th>Объявление</th><th>Площадь</th><th>₾ / мес</th><th>$ / мес</th><th>₽ / мес</th><th>Ссылка</th></tr></thead><tbody>';
-  items.forEach(l => {
-    const oG = l.nat===1, oU = l.nat===2;
-    const title = cap(l.title) || (l.kind==='house' ? 'Частный дом' : 'Квартира');
-    h += '<tr>'+
-      '<td><div class="li-title">'+title+'</div><div class="li-sub">обновлено '+l.date+' · myhome.ge</div></td>'+
-      '<td class="area">'+l.area+' м²</td>'+
-      '<td class="cur '+(oG?'orig':'conv')+'">'+fmt(l.gel)+'</td>'+
-      '<td class="cur '+(oU?'orig':'conv')+'">$'+fmt(l.usd)+'</td>'+
-      '<td class="cur conv">'+fmt(l.rub)+'</td>'+
-      '<td><a class="src-link" href="'+l.url+'" target="_blank" rel="noopener">открыть ↗</a></td>'+
-    '</tr>';
+function listRows(items, unitHdr){
+  if(!items.length) return '<div class="empty">Объявлений этого типа на дату сбора не нашлось.</div>';
+  let h='<div class="tbl-wrap"><table><thead><tr><th>Объявление</th><th>Площадь</th><th>₾'+unitHdr+'</th><th>$'+unitHdr+'</th><th>₽'+unitHdr+'</th><th>Ссылка</th></tr></thead><tbody>';
+  items.forEach(l=>{
+    const oG=l.nat===1, oU=l.nat===2, rub=Math.round(l.gel*RATE.gelRub);
+    const title=cap(l.title)||(l.kind==='house'?'Частный дом':'Квартира');
+    h+='<tr><td><div class="li-title">'+title+'</div><div class="li-sub">обновлено '+l.date+' · myhome.ge</div></td>'+
+       '<td class="area">'+l.area+' м²</td>'+
+       '<td class="cur '+(oG?'orig':'conv')+'">'+fmt(l.gel)+'</td>'+
+       '<td class="cur '+(oU?'orig':'conv')+'">$'+fmt(l.usd)+'</td>'+
+       '<td class="cur conv">'+fmt(rub)+'</td>'+
+       '<td><a class="src-link" href="'+l.url+'" target="_blank" rel="noopener">открыть ↗</a></td></tr>';
   });
-  return h + '</tbody></table></div>';
+  return h+'</tbody></table></div>';
 }
-
-function render(key){
-  const d = DATA[key];
-  const apts = d.listings.filter(l => l.kind==='apt');
-  const houses = d.listings.filter(l => l.kind==='house');
-  document.getElementById('cityMeta').textContent = d.apt.count+' квартир · '+d.house.count+' домов на рынке (показаны свежие)';
-  document.getElementById('cityView').innerHTML =
-    '<div class="blk">'+
-      '<div class="blk-head"><span class="ico apt">🏢</span><h2>Квартиры</h2><span class="sz">'+d.apt.size+'</span></div>'+
-      rangeCard('Средняя по рынку — квартира', d.apt)+
-      listRows(apts)+
-    '</div>'+
-    '<div class="blk">'+
-      '<div class="blk-head"><span class="ico house">🏡</span><h2>Дома</h2><span class="sz">'+d.house.size+'</span></div>'+
-      rangeCard('Средняя по рынку — дом', d.house)+
-      listRows(houses)+
-    '</div>'+
-    '<div class="note"><b>'+d.name+':</b> '+d.note+'</div>';
+function render(){
+  const key=sel.value, node=D.cities[key][curDeal];
+  const unit=curDeal==='rent'?' / мес':' всего';
+  const apts=node.listings.filter(l=>l.kind==='apt'), houses=node.listings.filter(l=>l.kind==='house');
+  const word=curDeal==='rent'?'аренда':'продажа';
+  document.getElementById('cityMeta').textContent=cnt(node.apt)+' квартир · '+cnt(node.house)+' домов на рынке ('+word+', показаны свежие)';
+  document.getElementById('cityView').innerHTML=
+    '<div class="blk"><div class="blk-head"><span class="ico apt">🏢</span><h2>Квартиры</h2><span class="sz">'+node.apt.size+'</span></div>'+
+      rangeCard('Средняя по рынку — квартира', node.apt, unit)+listRows(apts, unit)+'</div>'+
+    '<div class="blk"><div class="blk-head"><span class="ico house">🏡</span><h2>Дома</h2><span class="sz">'+node.house.size+'</span></div>'+
+      rangeCard('Средняя по рынку — дом', node.house, unit)+listRows(houses, unit)+'</div>'+
+    (node.note?'<div class="note"><b>'+D.cities[key].name+' · '+word+':</b> '+node.note+'</div>':'');
 }
+sel.addEventListener('change', render);
+document.querySelectorAll('#dealToggle button').forEach(b=>b.addEventListener('click',function(){
+  document.querySelectorAll('#dealToggle button').forEach(x=>x.classList.remove('active'));
+  this.classList.add('active'); curDeal=this.dataset.deal; render();
+}));
 
-sel.addEventListener('change', () => render(sel.value));
-render('tbilisi');
+document.getElementById('foot').innerHTML=
+  '<p>Объявления — из официального API портала <a href="https://www.myhome.ge" target="_blank" rel="noopener">myhome.ge</a> ('+D.meta.date+'). Скрипт листает все страницы по каждому городу, типу и виду сделки, отсеивает спам и мусорные лоты; всего в пуле '+fmt(D.meta.total)+' объявлений. «N на рынке» — сколько прошло фильтр (+ = упёрлись в потолок обхода, реально больше); в таблице показаны свежие. Цены ₾/$ — как на портале, ₽ — по курсу ЦБ РФ/XE на '+D.meta.date+'.</p>'+
+  '<p style="margin-top:10px">⚠ Ссылки ведут на карточки myhome.ge (ID из их API — объявления реальные). Обновление данных — скриптом <code>build_rent.py</code>. Разгар сезона: в Кобулети долгосрочных квартир мало — почти всё в посуточной аренде.</p>';
+
+render();
 </script>
 </body>
 </html>
