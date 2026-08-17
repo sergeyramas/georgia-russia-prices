@@ -7,8 +7,8 @@
 import json, urllib.request, urllib.parse, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
-GEN_DATE = "12.07.2026"
-RATE = {"gelRub": 29.07, "usdRub": 76.66, "gelUsd": 0.3801, "usdGel": 2.631}
+GEN_DATE = "17.08.2026"
+RATE = {"gelRub": 32.30, "usdRub": 84.54, "gelUsd": 0.3822, "usdGel": 2.6162}
 MAX_PAGES = 20
 SAMPLE = 16
 
@@ -131,7 +131,7 @@ def rng(items):
     return {"low": int(round(lo / step) * step), "high": int(round(hi / step) * step), "cur": "USD"}
 
 NOTE = {
- ("kobuleti", "rent"): "Муниципалитет Кобулети (Чакви, Цихисдзири, Очхамури). Июльский пик: долгосрочных квартир мало — почти всё в посуточной.",
+ ("kobuleti", "rent"): "Муниципалитет Кобулети (Чакви, Цихисдзири, Очхамури). Разгар сезона: долгосрочных квартир мало — почти всё в посуточной.",
  ("zugdidi", "rent"): "Не курорт, рынок узкий, почти всё в лари. Домов в аренду мало.",
  ("poti", "rent"): "Портовый город, не курорт — рынок скромный, цены ниже Батуми.",
 }
