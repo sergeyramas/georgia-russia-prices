@@ -7,8 +7,8 @@
 import json, urllib.request, urllib.parse, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
-GEN_DATE = "17.08.2026"
-RATE = {"gelRub": 32.30, "usdRub": 84.54, "gelUsd": 0.3822, "usdGel": 2.6162}
+GEN_DATE = "18.08.2026"
+RATE = {"gelRub": 32.50, "usdRub": 85.01, "gelUsd": 0.3822, "usdGel": 2.6162}
 MAX_PAGES = 20
 SAMPLE = 16
 
@@ -167,6 +167,27 @@ for city, deal, kind, seg in results:
     node = DATA[city][deal]
     node[kind] = {k: v for k, v in seg.items() if k != "sample"}
     node["listings"] += seg["sample"]
+
+# API myhome/ss.ge иногда частично отдаёт сегмент (флейк под нагрузкой).
+# Берём из прошлого прогона тот сегмент, где лотов было больше — данные того же дня, просто полнее.
+try:
+    prev_raw = open("rent-data.js", encoding="utf-8").read()
+    prev = json.loads(prev_raw[prev_raw.index("{"):prev_raw.rindex("}") + 1])
+    if prev.get("meta", {}).get("date") == GEN_DATE:
+        for c in DATA:
+            for d in DEALS:
+                keep = []
+                for k in TYPES:
+                    old_seg = prev["cities"][c][d][k]
+                    if old_seg.get("count", 0) > DATA[c][d][k]["count"]:
+                        DATA[c][d][k] = old_seg
+                        keep += [x for x in prev["cities"][c][d]["listings"] if x["kind"] == k]
+                    else:
+                        keep += [x for x in DATA[c][d]["listings"] if x["kind"] == k]
+                DATA[c][d]["listings"] = keep
+        print("(слит с прошлым прогоном той же даты — взяты более полные сегменты)")
+except Exception:
+    pass
 
 total = sum(DATA[c][d][k]["count"] for c in DATA for d in DEALS for k in TYPES)
 out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total,
