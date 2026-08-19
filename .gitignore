@@ -4,3 +4,4 @@
 *.log
 .claude/
 .vercel
+seen-listings.json

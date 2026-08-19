@@ -66,6 +66,10 @@
   td.conv{color:var(--muted);font-variant-numeric:tabular-nums}
   .src-link{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--accent);text-decoration:none;background:rgba(91,141,239,.1);padding:5px 10px;border-radius:8px;white-space:nowrap}
   .src-link:hover{background:rgba(91,141,239,.2)}
+  .new-badge{display:inline-block;font-size:11px;font-weight:600;color:#12a06a;background:rgba(18,160,106,.12);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:1px}
+  tr.is-new{background:rgba(18,160,106,.045)}
+  tr.is-new:hover{background:rgba(18,160,106,.08)}
+  .new-count{color:#12a06a;font-weight:600}
   .note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--muted);margin-top:6px}
   .note b{color:var(--text);font-weight:500}
   .empty{padding:18px;text-align:center;color:var(--faint);font-size:14px;background:var(--surface);border:1px dashed var(--border);border-radius:12px}
@@ -112,6 +116,9 @@ const D = window.RENT_DATA;
 const RATE = D.meta.rate;
 const ORDER = D.meta.order;
 let curDeal = 'rent';
+const FIRST = !!D.meta.first_run;
+const NEW_LABEL = FIRST ? 'свежее' : 'новое';
+const NEW_WORD  = FIRST ? 'свежих за сутки' : 'новых с прошлой проверки';
 
 const fmt = n => Math.round(n).toLocaleString('ru-RU');
 function conv(price, cur){
@@ -147,7 +154,8 @@ function listRows(items, unitHdr){
   items.forEach(l=>{
     const oG=l.nat===1, oU=l.nat===2, rub=Math.round(l.gel*RATE.gelRub);
     const title=cap(l.title)||(l.kind==='house'?'Частный дом':'Квартира');
-    h+='<tr><td><div class="li-title">'+title+'</div><div class="li-sub">обновлено '+l.date+' · '+l.src+'</div></td>'+
+    const badge = l.new ? '<span class="new-badge">'+NEW_LABEL+'</span>' : '';
+    h+='<tr class="'+(l.new?'is-new':'')+'"><td><div class="li-title">'+title+badge+'</div><div class="li-sub">обновлено '+l.date+' · '+l.src+'</div></td>'+
        '<td class="area">'+l.area+' м²</td>'+
        '<td class="cur '+(oG?'orig':'conv')+'">'+fmt(l.gel)+'</td>'+
        '<td class="cur '+(oU?'orig':'conv')+'">$'+fmt(l.usd)+'</td>'+
@@ -161,7 +169,9 @@ function render(){
   const unit=curDeal==='rent'?' / мес':' всего';
   const apts=node.listings.filter(l=>l.kind==='apt'), houses=node.listings.filter(l=>l.kind==='house');
   const word=curDeal==='rent'?'аренда':'продажа';
-  document.getElementById('cityMeta').textContent=cnt(node.apt)+' квартир · '+cnt(node.house)+' домов на рынке ('+word+', показаны свежие)';
+  const nNew=(node.apt.new_count||0)+(node.house.new_count||0);
+  document.getElementById('cityMeta').innerHTML=cnt(node.apt)+' квартир · '+cnt(node.house)+' домов на рынке ('+word+')'+
+    (nNew?' · <span class="new-count">'+fmt(nNew)+' '+NEW_WORD+'</span>':'');
   document.getElementById('cityView').innerHTML=
     '<div class="blk"><div class="blk-head"><span class="ico apt">🏢</span><h2>Квартиры</h2><span class="sz">'+node.apt.size+'</span></div>'+
       rangeCard('Средняя по рынку — квартира', node.apt, unit)+listRows(apts, unit)+'</div>'+
@@ -176,7 +186,7 @@ document.querySelectorAll('#dealToggle button').forEach(b=>b.addEventListener('c
 }));
 
 document.getElementById('foot').innerHTML=
-  '<p>Объявления собраны из официальных API двух крупнейших порталов Грузии — <a href="https://www.myhome.ge" target="_blank" rel="noopener">myhome.ge</a> и <a href="https://home.ss.ge" target="_blank" rel="noopener">ss.ge</a> ('+D.meta.date+'). Скрипт листает все страницы по каждому городу, типу и виду сделки, отсеивает спам, посуточную аренду и мусорные лоты; всего в пуле '+fmt(D.meta.total)+' объявлений. «N на рынке» — сколько прошло фильтр (+ = упёрлись в потолок обхода, реально больше); источник каждого лота подписан под названием. Цены ₾/$ — как на порталах, ₽ — по курсу ЦБ РФ/XE на '+D.meta.date+'. Одна и та же квартира может встречаться на обоих порталах — межпортальный дедуп не делаем.</p>'+
+  '<p>Объявления собраны из официальных API двух крупнейших порталов Грузии — <a href="https://www.myhome.ge" target="_blank" rel="noopener">myhome.ge</a> и <a href="https://home.ss.ge" target="_blank" rel="noopener">ss.ge</a> ('+D.meta.date+'). Скрипт листает все страницы по каждому городу, типу и виду сделки, отсеивает спам, посуточную аренду и мусорные лоты; всего в пуле '+fmt(D.meta.total)+' объявлений. «N на рынке» — сколько прошло фильтр (+ = упёрлись в потолок обхода, реально больше); источник каждого лота подписан под названием. Метка отмечает свежие лоты и они показываются первыми. Сейчас идёт первый прогон с историей: метка «свежее» ставится по дате самого объявления (размещено или обновлено за сутки) — в Тбилиси и Батуми таких много, потому что агентства ежедневно поднимают старые объявления, так что для крупных городов это индикатор активности, а не реально новых квартир. В малых городах (Кобулети, Поти, Зугдиди) цифра близка к правде. Со следующей проверки метка станет «новое» и будет означать строго: объявления, которого не было в прошлый раз. Цены ₾/$ — как на порталах, ₽ — по курсу ЦБ РФ/XE на '+D.meta.date+'. Одна и та же квартира может встречаться на обоих порталах — межпортальный дедуп не делаем.</p>'+
   '<p style="margin-top:10px">⚠ Ссылки ведут на карточки myhome.ge (ID из их API — объявления реальные). Обновление данных — скриптом <code>build_rent.py</code>. Разгар сезона: в Кобулети долгосрочных квартир мало — почти всё в посуточной аренде.</p>';
 
 render();

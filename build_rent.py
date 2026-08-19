@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # Собирает полный пул объявлений с ДВУХ источников — myhome.ge (tnet API) и
 # ss.ge (LegendSearch API, анонимный OAuth) — по городам, для аренды и продажи,
-# квартир и домов. Чистит спам, считает диапазоны/счётчики по объединённому пулу,
-# пишет rent-data.js (window.RENT_DATA).
+# квартир и домов. Чистит спам, помечает НОВЫЕ объявления (которых не было в
+# прошлый прогон), считает диапазоны/счётчики, пишет rent-data.js.
 # Обновить сайт: python3 build_rent.py && vercel deploy --prod
-import json, urllib.request, urllib.parse, urllib.error
+import json, os, urllib.request, urllib.parse, urllib.error
+from datetime import date, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
-GEN_DATE = "18.08.2026"
+TODAY = date.today()
+GEN_DATE = TODAY.strftime("%d.%m.%Y")
 RATE = {"gelRub": 32.50, "usdRub": 85.01, "gelUsd": 0.3822, "usdGel": 2.6162}
 MAX_PAGES = 20
-SAMPLE = 16
+SAMPLE = 18            # сколько лотов показывать на сегмент
+NEW_SLOTS = 10         # сколько мест в выборке резервируем под новые
+SEEN_FILE = "seen-listings.json"
+PRUNE_DAYS = 90
 
 def fetch(req):
     for attempt in range(3):
@@ -26,13 +31,34 @@ CITIES = [("tbilisi", "Тбилиси"), ("batumi", "Батуми"),
 DEALS = ["rent", "sale"]
 TYPES = ["apt", "house"]
 
-# --- source config: (city ids), (deal codes), (type codes) ---
 MY_CITY = {"tbilisi": 1, "batumi": 15, "kobuleti": 94, "poti": 91, "zugdidi": 39}
 MY_DEAL = {"rent": 2, "sale": 1}
 MY_TYPE = {"apt": 1, "house": 2}
 SS_CITY = {"tbilisi": 95, "batumi": 96, "kobuleti": 14, "poti": 101, "zugdidi": 100}
 SS_DEAL = {"rent": 1, "sale": 4}
 SS_TYPE = {"apt": 5, "house": 4}
+
+# ---------- память о виденных объявлениях ----------
+SEEN = {}
+FIRST_RUN = not os.path.exists(SEEN_FILE)
+if not FIRST_RUN:
+    try:
+        SEEN = json.load(open(SEEN_FILE, encoding="utf-8"))
+    except Exception:
+        SEEN, FIRST_RUN = {}, True
+
+def is_new(item):
+    """Новое = URL не встречался в прошлых прогонах.
+    На самом первом прогоне истории нет — падаем на дату самого объявления."""
+    if not FIRST_RUN:
+        return item["url"] not in SEEN
+    d = item.get("date") or ""
+    if len(d) >= 10:
+        try:
+            return date.fromisoformat(d[:10]) >= TODAY - timedelta(days=1)
+        except Exception:
+            return False
+    return False
 
 # ---------- myhome.ge (tnet) ----------
 MY_HDR = {"User-Agent": "Mozilla/5.0", "X-Website-Key": "myhome",
@@ -65,7 +91,7 @@ def my_pull(city, deal, kind):
             break
     return out
 
-# ---------- ss.ge (LegendSearch, anon OAuth) ----------
+# ---------- ss.ge ----------
 def ss_token():
     body = urllib.parse.urlencode({"grant_type": "client_credentials", "client_id": "ssweb",
                                    "client_secret": "t5w42KQQjowNRYkycrrX"}).encode()
@@ -102,7 +128,6 @@ def ss_pull(city, deal, kind, token):
             break
     return out
 
-# ---------- shared spam filter ----------
 def clean(items, deal):
     out = []
     for x in items:
@@ -131,7 +156,7 @@ def rng(items):
     return {"low": int(round(lo / step) * step), "high": int(round(hi / step) * step), "cur": "USD"}
 
 NOTE = {
- ("kobuleti", "rent"): "Муниципалитет Кобулети (Чакви, Цихисдзири, Очхамури). Разгар сезона: долгосрочных квартир мало — почти всё в посуточной.",
+ ("kobuleti", "rent"): "Муниципалитет Кобулети (Чакви, Цихисдзири, Очхамури). Сезон идёт на спад — долгосрочных предложений становится больше.",
  ("zugdidi", "rent"): "Не курорт, рынок узкий, почти всё в лари. Домов в аренду мало.",
  ("poti", "rent"): "Портовый город, не курорт — рынок скромный, цены ниже Батуми.",
 }
@@ -144,16 +169,22 @@ def segment(job):
     ss = ss_pull(city, deal, kind, TOKEN)
     capped = len(my) >= MAX_PAGES * 20 or len(ss) >= MAX_PAGES * 30
     items = clean(my + ss, deal)
+    for x in items:
+        x["new"] = 1 if is_new(x) else 0
     items.sort(key=lambda x: x["usd"])
-    sample = items[:SAMPLE]
+    # в выборку гарантированно попадают новые (до NEW_SLOTS), остальное — самые дешёвые
+    fresh = [x for x in items if x["new"]][:NEW_SLOTS]
+    rest = [x for x in items if not x["new"]][:max(0, SAMPLE - len(fresh))]
+    sample = sorted(fresh + rest, key=lambda x: (-x["new"], x["usd"]))
     for x in sample:
         d = x["date"]; x["date"] = (d[8:10] + "." + d[5:7]) if d and len(d) >= 10 else ""
     by_src = {}
     for x in items:
         by_src[x["src"]] = by_src.get(x["src"], 0) + 1
     return (city, deal, kind, {**rng(items), "count": len(items), "capped": capped,
-            "by_src": by_src, "size": "1–3 комнаты" if kind == "apt" else "3+ комнаты / коттедж",
-            "sample": sample})
+            "new_count": sum(x["new"] for x in items), "by_src": by_src,
+            "size": "1–3 комнаты" if kind == "apt" else "3+ комнаты / коттедж",
+            "sample": sample, "_urls": [x["url"] for x in items]})
 
 jobs = [(c, d, k) for c, _ in CITIES for d in DEALS for k in TYPES]
 with ThreadPoolExecutor(max_workers=5) as ex:
@@ -163,13 +194,14 @@ DATA = {c: {"name": n} for c, n in CITIES}
 for c, n in CITIES:
     for d in DEALS:
         DATA[c][d] = {"apt": {}, "house": {}, "listings": [], "note": NOTE.get((c, d), "")}
+all_urls = []
 for city, deal, kind, seg in results:
+    all_urls += seg.pop("_urls")
     node = DATA[city][deal]
     node[kind] = {k: v for k, v in seg.items() if k != "sample"}
     node["listings"] += seg["sample"]
 
-# API myhome/ss.ge иногда частично отдаёт сегмент (флейк под нагрузкой).
-# Берём из прошлого прогона тот сегмент, где лотов было больше — данные того же дня, просто полнее.
+# API иногда частично отдаёт сегмент — берём из прошлого прогона той же даты более полный
 try:
     prev_raw = open("rent-data.js", encoding="utf-8").read()
     prev = json.loads(prev_raw[prev_raw.index("{"):prev_raw.rindex("}") + 1])
@@ -178,9 +210,8 @@ try:
             for d in DEALS:
                 keep = []
                 for k in TYPES:
-                    old_seg = prev["cities"][c][d][k]
-                    if old_seg.get("count", 0) > DATA[c][d][k]["count"]:
-                        DATA[c][d][k] = old_seg
+                    if prev["cities"][c][d][k].get("count", 0) > DATA[c][d][k]["count"]:
+                        DATA[c][d][k] = prev["cities"][c][d][k]
                         keep += [x for x in prev["cities"][c][d]["listings"] if x["kind"] == k]
                     else:
                         keep += [x for x in DATA[c][d]["listings"] if x["kind"] == k]
@@ -190,15 +221,25 @@ except Exception:
     pass
 
 total = sum(DATA[c][d][k]["count"] for c in DATA for d in DEALS for k in TYPES)
-out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total,
-                "sources": ["myhome.ge", "ss.ge"], "order": [c for c, _ in CITIES]},
+new_total = sum(DATA[c][d][k].get("new_count", 0) for c in DATA for d in DEALS for k in TYPES)
+out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total, "new_total": new_total,
+                "first_run": FIRST_RUN, "sources": ["myhome.ge", "ss.ge"],
+                "order": [c for c, _ in CITIES]},
        "cities": DATA}
 with open("rent-data.js", "w", encoding="utf-8") as f:
     f.write("window.RENT_DATA = " + json.dumps(out, ensure_ascii=False) + ";")
 
-print(f"generated rent-data.js — total cleaned lots (myhome+ss.ge): {total}")
+# обновляем память: новые URL с сегодняшней датой, старьё чистим
+iso = TODAY.isoformat()
+cutoff = (TODAY - timedelta(days=PRUNE_DAYS)).isoformat()
+for u in all_urls:
+    SEEN.setdefault(u, iso)
+SEEN = {u: d for u, d in SEEN.items() if d >= cutoff}
+json.dump(SEEN, open(SEEN_FILE, "w", encoding="utf-8"))
+
+print(f"lots: {total} | новых: {new_total}{' (первый прогон — по дате объявления)' if FIRST_RUN else ''} | в памяти URL: {len(SEEN)}")
 for c, n in CITIES:
     for d in DEALS:
         a, h = DATA[c][d]["apt"], DATA[c][d]["house"]
-        print(f"  {n:9} {d:4} apt ${a['low']}-{a['high']} (n={a['count']}{'+' if a['capped'] else ''} {a['by_src']})  "
-              f"house ${h['low']}-{h['high']} (n={h['count']}{'+' if h['capped'] else ''})")
+        print(f"  {n:9} {d:4} кв {a['count']}{'+' if a['capped'] else ''} (нов {a.get('new_count',0)}) ${a['low']}-{a['high']}"
+              f"   дом {h['count']}{'+' if h['capped'] else ''} (нов {h.get('new_count',0)}) ${h['low']}-{h['high']}")
