@@ -267,6 +267,13 @@ for c in DATA:
                 pending[x["url"]] = {"city": c, "deal": d, "text": x["desc"]}
 json.dump(pending, open(PENDING_FILE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
+# непереведённый грузинский текст в публичный файл не кладём — только в pending
+for c in DATA:
+    for d in DEALS:
+        for x in DATA[c][d]["listings"]:
+            if x.pop("need_tr", None):
+                x.pop("desc", None)
+
 total = sum(DATA[c][d][k]["count"] for c in DATA for d in DEALS for k in TYPES)
 new_total = sum(DATA[c][d][k].get("new_count", 0) for c in DATA for d in DEALS for k in TYPES)
 fresh_total = sum(DATA[c][d][k].get("fresh_count", 0) for c in DATA for d in DEALS for k in TYPES)
