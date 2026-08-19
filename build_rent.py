@@ -4,7 +4,7 @@
 # квартир и домов. Чистит спам, помечает НОВЫЕ объявления (которых не было в
 # прошлый прогон), считает диапазоны/счётчики, пишет rent-data.js.
 # Обновить сайт: python3 build_rent.py && vercel deploy --prod
-import json, os, urllib.request, urllib.parse, urllib.error
+import json, os, re, urllib.request, urllib.parse, urllib.error
 from datetime import date, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
@@ -15,7 +15,33 @@ MAX_PAGES = 20
 SAMPLE = 18            # сколько лотов показывать на сегмент
 NEW_SLOTS = 10         # сколько мест в выборке резервируем под новые
 SEEN_FILE = "seen-listings.json"
+DESC_FILE = "desc-ru.json"        # кэш переводов грузинских описаний
+PENDING_FILE = "desc-pending.json"  # что осталось перевести
+DESC_MAX = 700
 PRUNE_DAYS = 90
+
+GE_RE = re.compile(r"[\u10A0-\u10FF]")
+TAG_RE = re.compile(r"<[^>]+>")
+
+def clean_desc(t):
+    """HTML → плоский текст, схлопнутые пробелы, обрезка."""
+    if not t:
+        return ""
+    t = TAG_RE.sub(" ", t)
+    t = (t.replace("&nbsp;", " ").replace("&amp;", "&")
+          .replace("&quot;", '"').replace("&#39;", "'").replace("&lt;", "<").replace("&gt;", ">"))
+    t = re.sub(r"\s+", " ", t).strip()
+    return t[:DESC_MAX].rstrip() + ("…" if len(t) > DESC_MAX else "")
+
+def is_georgian(t):
+    return bool(t) and len(GE_RE.findall(t)) > len(t) * 0.15
+
+DESC_RU = {}
+if os.path.exists(DESC_FILE):
+    try:
+        DESC_RU = json.load(open(DESC_FILE, encoding="utf-8"))
+    except Exception:
+        DESC_RU = {}
 
 def fetch(req):
     for attempt in range(3):
@@ -48,14 +74,15 @@ if not FIRST_RUN:
         SEEN, FIRST_RUN = {}, True
 
 def is_new(item):
-    """Новое = URL не встречался в прошлых прогонах.
-    На самом первом прогоне истории нет — падаем на дату самого объявления."""
-    if not FIRST_RUN:
-        return item["url"] not in SEEN
+    """НОВОЕ = URL не встречался в прошлых прогонах. Осмысленно только когда история есть."""
+    return (not FIRST_RUN) and item["url"] not in SEEN
+
+def is_fresh(item):
+    """СВЕЖЕЕ = объявление размещено или поднято за последние двое суток."""
     d = item.get("date") or ""
     if len(d) >= 10:
         try:
-            return date.fromisoformat(d[:10]) >= TODAY - timedelta(days=1)
+            return date.fromisoformat(d[:10]) >= TODAY - timedelta(days=2)
         except Exception:
             return False
     return False
@@ -86,7 +113,8 @@ def my_pull(city, deal, kind):
             out.append({"kind": kind, "src": "myhome.ge",
                 "title": (r.get("dynamic_title") or "").replace("Сдается ", "").replace("Продается ", "").strip(),
                 "area": r.get("area") or 0, "gel": gel, "usd": usd, "nat": r.get("currency_id"),
-                "url": f"https://www.myhome.ge/ru/pr/{r['id']}", "date": (r.get("last_updated") or "")[:10]})
+                "url": f"https://www.myhome.ge/ru/pr/{r['id']}", "date": (r.get("last_updated") or "")[:10],
+                "desc": clean_desc(r.get("comment"))})
         if len(batch) < 20:
             break
     return out
@@ -123,7 +151,8 @@ def ss_pull(city, deal, kind, token):
                 "title": ("Квартира" if kind == "apt" else "Частный дом") + (f", {r.get('numberOfBedrooms')} сп." if r.get("numberOfBedrooms") else ""),
                 "area": r.get("totalArea") or 0, "gel": pr.get("priceGeo") or 0, "usd": pr.get("priceUsd") or 0,
                 "nat": 1 if pr.get("currencyType") == 1 else 2,
-                "url": f"https://home.ss.ge/ru/real-estate/{aid}", "date": (r.get("orderDate") or "")[:10]})
+                "url": f"https://home.ss.ge/ru/real-estate/{aid}", "date": (r.get("orderDate") or "")[:10],
+                "desc": clean_desc(r.get("description"))})
         if len(batch) < 30:
             break
     return out
@@ -171,18 +200,28 @@ def segment(job):
     items = clean(my + ss, deal)
     for x in items:
         x["new"] = 1 if is_new(x) else 0
+        x["fresh"] = 1 if is_fresh(x) else 0
     items.sort(key=lambda x: x["usd"])
     # в выборку гарантированно попадают новые (до NEW_SLOTS), остальное — самые дешёвые
-    fresh = [x for x in items if x["new"]][:NEW_SLOTS]
-    rest = [x for x in items if not x["new"]][:max(0, SAMPLE - len(fresh))]
-    sample = sorted(fresh + rest, key=lambda x: (-x["new"], x["usd"]))
+    prio = [x for x in items if x["new"] or x["fresh"]]
+    prio.sort(key=lambda x: (-x["new"], -x["fresh"], x["usd"]))
+    prio = prio[:NEW_SLOTS]
+    rest = [x for x in items if x not in prio][:max(0, SAMPLE - len(prio))]
+    sample = sorted(prio + rest, key=lambda x: (-x["new"], -x["fresh"], x["usd"]))
     for x in sample:
         d = x["date"]; x["date"] = (d[8:10] + "." + d[5:7]) if d and len(d) >= 10 else ""
+        desc = x.get("desc") or ""
+        if is_georgian(desc):
+            ru = DESC_RU.get(x["url"])
+            if ru:
+                x["desc"], x["tr"] = ru, 1      # переведено
+            else:
+                x["desc"], x["need_tr"] = desc, 1
     by_src = {}
     for x in items:
         by_src[x["src"]] = by_src.get(x["src"], 0) + 1
     return (city, deal, kind, {**rng(items), "count": len(items), "capped": capped,
-            "new_count": sum(x["new"] for x in items), "by_src": by_src,
+            "new_count": sum(x["new"] for x in items), "fresh_count": sum(x["fresh"] for x in items), "by_src": by_src,
             "size": "1–3 комнаты" if kind == "apt" else "3+ комнаты / коттедж",
             "sample": sample, "_urls": [x["url"] for x in items]})
 
@@ -220,9 +259,18 @@ try:
 except Exception:
     pass
 
+pending = {}
+for c in DATA:
+    for d in DEALS:
+        for x in DATA[c][d]["listings"]:
+            if x.get("need_tr"):
+                pending[x["url"]] = {"city": c, "deal": d, "text": x["desc"]}
+json.dump(pending, open(PENDING_FILE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
 total = sum(DATA[c][d][k]["count"] for c in DATA for d in DEALS for k in TYPES)
 new_total = sum(DATA[c][d][k].get("new_count", 0) for c in DATA for d in DEALS for k in TYPES)
-out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total, "new_total": new_total,
+fresh_total = sum(DATA[c][d][k].get("fresh_count", 0) for c in DATA for d in DEALS for k in TYPES)
+out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total, "new_total": new_total, "fresh_total": fresh_total,
                 "first_run": FIRST_RUN, "sources": ["myhome.ge", "ss.ge"],
                 "order": [c for c, _ in CITIES]},
        "cities": DATA}
@@ -237,9 +285,10 @@ for u in all_urls:
 SEEN = {u: d for u, d in SEEN.items() if d >= cutoff}
 json.dump(SEEN, open(SEEN_FILE, "w", encoding="utf-8"))
 
+print(f"описаний без перевода: {len(pending)} -> {PENDING_FILE}")
 print(f"lots: {total} | новых: {new_total}{' (первый прогон — по дате объявления)' if FIRST_RUN else ''} | в памяти URL: {len(SEEN)}")
 for c, n in CITIES:
     for d in DEALS:
         a, h = DATA[c][d]["apt"], DATA[c][d]["house"]
-        print(f"  {n:9} {d:4} кв {a['count']}{'+' if a['capped'] else ''} (нов {a.get('new_count',0)}) ${a['low']}-{a['high']}"
-              f"   дом {h['count']}{'+' if h['capped'] else ''} (нов {h.get('new_count',0)}) ${h['low']}-{h['high']}")
+        print(f"  {n:9} {d:4} кв {a['count']}{'+' if a['capped'] else ''} (нов {a.get('new_count',0)}/свеж {a.get('fresh_count',0)}) ${a['low']}-{a['high']}"
+              f"   дом {h['count']}{'+' if h['capped'] else ''} (нов {h.get('new_count',0)}/свеж {h.get('fresh_count',0)}) ${h['low']}-{h['high']}")
