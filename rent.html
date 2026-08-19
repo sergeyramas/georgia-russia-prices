@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Аренда и продажа жилья в Грузии — Тбилиси, Батуми, Кобулети, Поти, Зугдиди</title>
-<meta name="description" content="Аренда и продажа квартир и домов в Грузии: Тбилиси, Батуми, Кобулети, Поти, Зугдиди. Тысячи объявлений с myhome.ge, диапазоны рынка в лари, долларах и рублях, прямые ссылки.">
+<title>Аренда и продажа жилья в Грузии — Батуми, Кобулети, побережье, Тбилиси</title>
+<meta name="description" content="Аренда и продажа жилья в Грузии: Тбилиси, Батуми, Кобулети, побережье (Чакви, Цихисдзири, Гонио), Поти, Зугдиди. Тысячи объявлений с myhome.ge и ss.ge, описания от хозяев на русском, варианты до $500.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -70,6 +70,10 @@
   tr.is-new{background:rgba(18,160,106,.045)}
   tr.is-new:hover{background:rgba(18,160,106,.08)}
   .new-count{color:#12a06a;font-weight:600}
+  tr.is-budget{background:rgba(18,160,106,.10)}
+  tr.is-budget:hover{background:rgba(18,160,106,.17)}
+  tr.is-budget td:first-child{box-shadow:inset 3px 0 0 var(--green)}
+  .bud-badge{display:inline-block;font-size:11px;font-weight:600;color:#0d7d52;background:rgba(18,160,106,.22);padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:1px}
   .fresh-badge{display:inline-block;font-size:11px;font-weight:600;color:#b07d09;background:rgba(176,125,9,.12);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:1px}
   .li-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-top:6px;max-width:520px;white-space:normal}
   .li-desc.clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -95,7 +99,7 @@
 <header>
   <div class="kicker">Рынок жилья · myhome.ge + ss.ge · август 2026</div>
   <h1>Аренда и продажа жилья в Грузии</h1>
-  <p class="sub">Квартиры и дома в Тбилиси, Батуми, Кобулети, Поти и Зугдиди — аренда и покупка. Диапазоны по рынку и свежие объявления с прямыми ссылками. Данные собраны пачкой из официального API myhome.ge, обход по всем страницам с чисткой спама.</p>
+  <p class="sub">Квартиры и дома по всему побережью и в крупных городах — аренда и покупка. Под каждым объявлением текст от хозяина на русском, чтобы не открывать лишний раз. <b style="color:#0d7d52">Зелёным</b> отмечены варианты до $500 в месяц. Данные из API myhome.ge и ss.ge, обход по всем страницам с чисткой спама.</p>
   <div class="rate-bar" id="rateBar"></div>
 </header>
 
@@ -159,10 +163,13 @@ function listRows(items, unitHdr){
     const oG=l.nat===1, oU=l.nat===2, rub=Math.round(l.gel*RATE.gelRub);
     const title=cap(l.title)||(l.kind==='house'?'Частный дом':'Квартира');
     const badge = l.new ? '<span class="new-badge">новое</span>' : (l.fresh ? '<span class="fresh-badge">свежее</span>' : '');
+    const BUD = D.meta.budget_usd || 500;
+    const isBud = curDeal==='rent' && l.usd <= BUD;
+    const budBadge = isBud ? '<span class="bud-badge">до $'+BUD+'</span>' : '';
     const did='d'+(++descId);
     const dsc = (l.desc && !l.need_tr) ? '<div class="li-desc clip" id="'+did+'">'+l.desc.replace(/</g,'&lt;')+(l.tr?'<span class="li-tr">· перевод</span>':'')+'</div>'+
       '<button class="li-more" onclick="var e=document.getElementById(\''+did+'\');e.classList.toggle(\'clip\');this.textContent=e.classList.contains(\'clip\')?\'показать целиком\':\'свернуть\'">показать целиком</button>' : '';
-    h+='<tr class="'+(l.new?'is-new':'')+'"><td><div class="li-title">'+title+badge+'</div><div class="li-sub">обновлено '+l.date+' · '+l.src+'</div>'+dsc+'</td>'+
+    h+='<tr class="'+[l.new?'is-new':'',isBud?'is-budget':''].filter(Boolean).join(' ')+'"><td><div class="li-title">'+title+badge+budBadge+'</div><div class="li-sub">обновлено '+l.date+' · '+l.src+'</div>'+dsc+'</td>'+
        '<td class="area">'+l.area+' м²</td>'+
        '<td class="cur '+(oG?'orig':'conv')+'">'+fmt(l.gel)+'</td>'+
        '<td class="cur '+(oU?'orig':'conv')+'">$'+fmt(l.usd)+'</td>'+
@@ -177,6 +184,7 @@ function render(){
   const apts=node.listings.filter(l=>l.kind==='apt'), houses=node.listings.filter(l=>l.kind==='house');
   const word=curDeal==='rent'?'аренда':'продажа';
   const nNew=(node.apt.new_count||0)+(node.house.new_count||0);
+  const nBud=(node.apt.budget_count||0)+(node.house.budget_count||0);
   const nFresh=(node.apt.fresh_count||0)+(node.house.fresh_count||0);
   const bits=[];
   if(nNew) bits.push('<span class="new-count">'+fmt(nNew)+' новых</span>');

@@ -53,14 +53,22 @@ def fetch(req):
     return None
 
 CITIES = [("tbilisi", "Тбилиси"), ("batumi", "Батуми"),
-          ("kobuleti", "Кобулети"), ("poti", "Поти"), ("zugdidi", "Зугдиди")]
+          ("kobuleti", "Кобулети"),
+          ("coast", "Побережье: Чакви · Цихисдзири · Гонио"),
+          ("poti", "Поти"), ("zugdidi", "Зугдиди")]
+BUDGET_USD = 500   # порог «бюджетный вариант»
 DEALS = ["rent", "sale"]
 TYPES = ["apt", "house"]
 
-MY_CITY = {"tbilisi": 1, "batumi": 15, "kobuleti": 94, "poti": 91, "zugdidi": 39}
+# по несколько id на город: посёлки в API — отдельные «города»/муниципалитеты
+MY_CITY = {"tbilisi": [1], "batumi": [15], "kobuleti": [94],
+           "coast": [233, 202, 123],          # Кобулетский мун., Хелвачаурский мун., Хелвачаури
+           "poti": [91], "zugdidi": [39]}
 MY_DEAL = {"rent": 2, "sale": 1}
 MY_TYPE = {"apt": 1, "house": 2}
-SS_CITY = {"tbilisi": 95, "batumi": 96, "kobuleti": 14, "poti": 101, "zugdidi": 100}
+SS_CITY = {"tbilisi": [95], "batumi": [96], "kobuleti": [14],
+           "coast": [60, 65, 126, 109, 16, 46, 57, 10],  # Чакви, Цихисдзири, Махинджаури, Гонио, Сарпи, Хелвачаури, Шекветили, Уреки
+           "poti": [101], "zugdidi": [100]}
 SS_DEAL = {"rent": 1, "sale": 4}
 SS_TYPE = {"apt": 5, "house": 4}
 
@@ -93,9 +101,10 @@ MY_HDR = {"User-Agent": "Mozilla/5.0", "X-Website-Key": "myhome",
 
 def my_pull(city, deal, kind):
     seen, out = set(), []
-    for page in range(1, MAX_PAGES + 1):
+    for cid in MY_CITY[city]:
+      for page in range(1, MAX_PAGES + 1):
         url = (f"https://api-statements.tnet.ge/v1/statements?page={page}"
-               f"&deal_types={MY_DEAL[deal]}&real_estate_types={MY_TYPE[kind]}&cities={MY_CITY[city]}&limit=100")
+               f"&deal_types={MY_DEAL[deal]}&real_estate_types={MY_TYPE[kind]}&cities={cid}&limit=100")
         try:
             batch = fetch(urllib.request.Request(url, headers=MY_HDR))["data"]["data"]
         except Exception:
@@ -130,9 +139,10 @@ def ss_token():
 def ss_pull(city, deal, kind, token):
     H = {"Authorization": "Bearer " + token, "User-Agent": "Mozilla/5.0", "Content-Type": "application/json"}
     seen, out = set(), []
-    for page in range(1, MAX_PAGES + 1):
+    for cid in SS_CITY[city]:
+      for page in range(1, MAX_PAGES + 1):
         payload = {"realEstateDealType": SS_DEAL[deal], "realEstateType": SS_TYPE[kind],
-                   "cityIdList": [SS_CITY[city]], "page": page, "pageSize": 30}
+                   "cityIdList": [cid], "page": page, "pageSize": 30}
         try:
             d = fetch(urllib.request.Request(
                 "https://api-gateway.ss.ge/v1/RealEstate/LegendSearch", data=json.dumps(payload).encode(), headers=H))
@@ -187,6 +197,8 @@ def rng(items):
 NOTE = {
  ("kobuleti", "rent"): "Муниципалитет Кобулети (Чакви, Цихисдзири, Очхамури). Сезон идёт на спад — долгосрочных предложений становится больше.",
  ("zugdidi", "rent"): "Не курорт, рынок узкий, почти всё в лари. Домов в аренду мало.",
+ ("coast", "rent"): "Посёлки между Батуми и Кобулети плюс южное побережье: Чакви, Цихисдзири, Махинджаури, Гонио, Сарпи, Хелвачаури, Шекветили, Уреки. Тут дешевле, чем в самих городах, и предложения не пересекаются с Кобулети — смотреть стоит, если в городе пусто.",
+ ("coast", "sale"): "Посёлки побережья Аджарии и Гурии. Частный сектор и небольшие новостройки у моря.",
  ("poti", "rent"): "Портовый город, не курорт — рынок скромный, цены ниже Батуми.",
 }
 
@@ -200,6 +212,8 @@ def segment(job):
     items = clean(my + ss, deal)
     for x in items:
         x["new"] = 1 if is_new(x) else 0
+        x["fresh"] = 1 if is_fresh(x) else 0
+        x["budget"] = 1 if (deal == "rent" and x["usd"] <= BUDGET_USD) else 0
         x["fresh"] = 1 if is_fresh(x) else 0
     items.sort(key=lambda x: x["usd"])
     # в выборку гарантированно попадают новые (до NEW_SLOTS), остальное — самые дешёвые
@@ -221,7 +235,9 @@ def segment(job):
     for x in items:
         by_src[x["src"]] = by_src.get(x["src"], 0) + 1
     return (city, deal, kind, {**rng(items), "count": len(items), "capped": capped,
-            "new_count": sum(x["new"] for x in items), "fresh_count": sum(x["fresh"] for x in items), "by_src": by_src,
+            "new_count": sum(x["new"] for x in items),
+            "fresh_count": sum(x["fresh"] for x in items),
+            "budget_count": sum(x["budget"] for x in items), "fresh_count": sum(x["fresh"] for x in items), "by_src": by_src,
             "size": "1–3 комнаты" if kind == "apt" else "3+ комнаты / коттедж",
             "sample": sample, "_urls": [x["url"] for x in items]})
 
@@ -248,10 +264,11 @@ try:
         for c in DATA:
             for d in DEALS:
                 keep = []
+                pnode = prev.get("cities", {}).get(c, {}).get(d)
                 for k in TYPES:
-                    if prev["cities"][c][d][k].get("count", 0) > DATA[c][d][k]["count"]:
-                        DATA[c][d][k] = prev["cities"][c][d][k]
-                        keep += [x for x in prev["cities"][c][d]["listings"] if x["kind"] == k]
+                    if pnode and pnode.get(k, {}).get("count", 0) > DATA[c][d][k]["count"]:
+                        DATA[c][d][k] = pnode[k]
+                        keep += [x for x in pnode.get("listings", []) if x["kind"] == k]
                     else:
                         keep += [x for x in DATA[c][d]["listings"] if x["kind"] == k]
                 DATA[c][d]["listings"] = keep
@@ -279,7 +296,7 @@ new_total = sum(DATA[c][d][k].get("new_count", 0) for c in DATA for d in DEALS f
 fresh_total = sum(DATA[c][d][k].get("fresh_count", 0) for c in DATA for d in DEALS for k in TYPES)
 out = {"meta": {"date": GEN_DATE, "rate": RATE, "total": total, "new_total": new_total, "fresh_total": fresh_total,
                 "first_run": FIRST_RUN, "sources": ["myhome.ge", "ss.ge"],
-                "order": [c for c, _ in CITIES]},
+                "budget_usd": BUDGET_USD, "order": [c for c, _ in CITIES]},
        "cities": DATA}
 with open("rent-data.js", "w", encoding="utf-8") as f:
     f.write("window.RENT_DATA = " + json.dumps(out, ensure_ascii=False) + ";")
